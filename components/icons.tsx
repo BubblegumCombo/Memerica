@@ -106,3 +106,32 @@ export function CheckIcon({ size = 16, fill = "none", strokeWidth = 2.4, ...rest
     </svg>
   );
 }
+
+export function TagIcon({ size = 23, fill = "none", strokeWidth = 1.9, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} fill={fill} {...rest}>
+      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+      <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function UsersIcon({ size = 23, fill = "none", strokeWidth = 1.9, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} fill={fill} {...rest}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+export function LinkIcon({ size = 16, fill = "none", strokeWidth = 2, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} fill={fill} {...rest}>
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  );
+}
