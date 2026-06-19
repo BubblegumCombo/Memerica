@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #d8d6cf; -webkit-font-smoothing: antialiased; font-family: 'Geist', system-ui, sans-serif; }
+  .meme-cap { font-family: 'Anton', Impact, 'Arial Narrow Bold', sans-serif; color: #fff; text-transform: uppercase; line-height: 0.98; letter-spacing: 0.5px; text-shadow: -2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 3px 4px rgba(0,0,0,.5); }
+  .meme-wm { font-family: 'Anton', Impact, sans-serif; text-transform: uppercase; color: rgba(255,255,255,0.055); line-height: 1; letter-spacing: 2px; }
+  .app-scroll::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.28)} 100%{transform:scale(1)} }
+</style>
+</helmet>
+
+<div style="width: max-content; min-width: 100%; min-height: 100vh; box-sizing: border-box; padding: 56px 48px 80px; background: #d8d6cf;">
+
+  <!-- Brief -->
+  <div style="max-width: 760px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 28px 32px; margin-bottom: 56px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+      <div style="display:flex; height:18px; border-radius:3px; overflow:hidden; box-shadow:0 0 0 1px rgba(0,0,0,.12);">
+        <div style="width:7px; background:#b22234;"></div><div style="width:7px; background:#fff;"></div><div style="width:7px; background:#3c3b6e;"></div>
+      </div>
+      <span style="font-weight:800; letter-spacing:-0.3px; font-size:18px; color:#111;">MEMERICA</span>
+      <span style="font-size:12px; font-weight:600; color:#b22234; letter-spacing:.04em; text-transform:uppercase;">Freedom of the Feed</span>
+    </div>
+    <p style="margin:0 0 10px; font-size:14px; line-height:1.6; color:#3a3a3a;">A tagged meme-sharing app for one <strong>shared space</strong>. The admin uploads memes (saved to their S3 bucket), assigns content tags, and decides when a post ships. Members just swipe a feed the admin curates with tags behind the scenes — then like, dislike, and comment.</p>
+    <p style="margin:0; font-size:13px; line-height:1.6; color:#6a6a6a;">Built on the ManaSync dark foundation with a red/white/blue skin. <strong style="color:#3a3a3a;">Blue = like, red = dislike.</strong> The flagship feed is live — swipe the feed, tap to react, open a comment thread. Tags are admin-only — members never see or manage them. iOS + Android shown for the core flows.</p>
+  </div>
+
+  <!-- ===================== SECTION 1: USER FEED ===================== -->
+  <div style="font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6a6a6a; margin-bottom:18px;"><span style="color:#b22234;">★</span>&nbsp;User &middot; Meme Feed &nbsp;<span style="color:#a3a3a3; font-weight:600;">— tap to react &amp; open comments</span></div>
+  <div style="display:flex; gap:48px; align-items:flex-start; margin-bottom:64px;">
+
+    <!-- Frame 1a: iOS feed v1 (INTERACTIVE) -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; Variation 1 &mdash; Civic Card &nbsp;<span style="color:#3b82f6;">● live — swipe, drag or tap ‹ ›</span></div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+
+          <!-- COMMENTS (in-app) -->
+          <sc-if value="{{ uShowComments }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a;">
+              <div style="padding:54px 12px 12px; display:flex; align-items:center; gap:6px; border-bottom:1px solid #1c1c1c; background:#0d0d0d;">
+                <button onClick="{{ back }}" style="width:40px; height:40px; border:0; background:transparent; color:#fafafa; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <span style="font-size:17px; font-weight:700;">Comments</span>
+              </div>
+              <div class="app-scroll" style="flex:1; overflow:auto;">
+                <div style="display:flex; gap:10px; padding:14px 16px; border-bottom:1px solid #161616; align-items:center;">
+                  <div class="meme-cap" style="width:48px; height:48px; border-radius:8px; background:#3a1f24; display:flex; align-items:center; justify-content:center; font-size:9px; text-align:center; flex:none; padding:4px;">GG</div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:13px; font-weight:600; color:#e8e8e8;">{{ activeCaption }}</div>
+                    <div style="font-size:12px; color:#7a7a7a; margin-top:3px;">{{ activeStat }}</div>
+                  </div>
+                </div>
+                <sc-for list="{{ uComments }}" as="c" hint-placeholder-count="3">
+                  <div style="display:flex; gap:11px; padding:14px 16px;">
+                    <div style="width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:{{ c.color }};">{{ c.initials }}</div>
+                    <div style="flex:1; min-width:0;">
+                      <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-size:13px; font-weight:600;">{{ c.author }}</span><span style="font-size:11px; color:#6a6a6a;">{{ c.time }}</span></div>
+                      <div style="font-size:14px; color:#d4d4d4; line-height:1.45; margin-top:2px;">{{ c.text }}</div>
+                      <div style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+                        <button onClick="{{ c.onUp }}" style="display:flex; align-items:center; gap:5px; border:0; background:transparent; padding:3px 6px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:{{ c.upColor }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ c.upFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ c.upCount }}</span></button>
+                        <button onClick="{{ c.onDown }}" style="display:flex; align-items:center; gap:5px; border:0; background:transparent; padding:3px 6px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:{{ c.downColor }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ c.downFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ c.downCount }}</span></button>
+                        <span style="font-size:12px; color:#7a7a7a; font-weight:600; padding:3px 6px;">Reply</span>
+                      </div>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="height:12px;"></div>
+              </div>
+              <div style="display:flex; align-items:center; gap:9px; padding:10px 12px 26px; border-top:1px solid #1c1c1c; background:#0d0d0d;">
+                <div style="width:32px; height:32px; border-radius:50%; flex:none; background:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">YO</div>
+                <input value="{{ composer }}" onChange="{{ setComposer }}" placeholder="Add a comment…" style="flex:1; height:40px; border-radius:20px; border:1px solid #2a2a2a; background:#161616; color:#fafafa; padding:0 16px; font-size:14px; outline:none; font-family:inherit;" />
+                <button onClick="{{ sendComment }}" style="width:40px; height:40px; border:0; border-radius:50%; background:#3b82f6; color:#fff; display:flex; align-items:center; justify-content:center; flex:none;">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
+                </button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- MAIN (feed / tags / profile) -->
+          <sc-if value="{{ uNotComments }}" hint-placeholder-val="{{ true }}">
+            <div style="height:100%; display:flex; flex-direction:column;">
+              <!-- top bar -->
+              <div style="background:#0d0d0d; padding:50px 16px 0;">
+                <div style="display:flex; align-items:center; gap:10px; height:46px;">
+                  <div style="display:flex; align-items:center; height:22px; border-radius:4px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.14);"><div style="width:24px; height:22px; background:#3c3b6e; display:flex; align-items:center; justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.7 1.4 6.8L12 17.8 6 21.2l1.4-6.8L2.3 9.7l6.9-.7z"/></svg></div><div style="display:flex; flex-direction:column; width:26px; height:22px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#f5f5f5;"></div><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#f5f5f5;"></div></div></div>
+                  <span style="font-weight:800; font-size:20px; letter-spacing:-0.5px;">MEMERICA</span>
+                  <span style="color:#b22234; font-size:16px; margin-left:-3px;">★</span>
+                </div>
+                <div style="display:flex; height:3px; margin:6px -16px 0;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#e9e9ea;"></div><div style="flex:1; background:#3c3b6e;"></div></div>
+              </div>
+
+              <div class="app-scroll" style="flex:1; overflow:auto;">
+
+                <!-- FEED (swipe carousel) -->
+                <sc-if value="{{ uShowFeed }}" hint-placeholder-val="{{ true }}">
+                  <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a;">
+                    <div class="app-scroll" data-carousel onScroll="{{ onFeedScroll }}" style="flex:1; display:flex; overflow-x:auto; scroll-snap-type:x mandatory; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:pan-y;">
+
+                      <div style="flex:none; width:100%; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; padding:4px 18px 0;">
+                        <div style="border:1px solid #232323; border-radius:18px; background:#111; overflow:hidden; box-shadow:0 14px 44px rgba(0,0,0,.45);">
+                          <div style="position:relative; height:360px; background:#1e3a5f; display:flex; flex-direction:column; justify-content:space-between; padding:22px 16px;">
+                            <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:140px;">CATS</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">When the red dot</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">finally holds still</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:8px; padding:11px 12px;">
+                            <button onClick="{{ rx.m1.onLike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m1.likeBg }}; color:{{ rx.m1.likeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m1.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m1.likeCount }}</span></button>
+                            <button onClick="{{ rx.m1.onDislike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m1.dislikeBg }}; color:{{ rx.m1.dislikeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m1.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m1.dislikeCount }}</span></button>
+                            <div style="flex:1;"></div>
+                            <button onClick="{{ rx.m1.onComment }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#8a8a8a;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span style="font-variant-numeric:tabular-nums;">24</span></button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style="flex:none; width:100%; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; padding:4px 18px 0;">
+                        <div style="border:1px solid #232323; border-radius:18px; background:#111; overflow:hidden; box-shadow:0 14px 44px rgba(0,0,0,.45);">
+                          <div style="position:relative; height:360px; background:#3a1f24; display:flex; flex-direction:column; justify-content:space-between; padding:22px 16px;">
+                            <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:170px;">GG</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">Me: just one more game</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">The sun: rising</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:8px; padding:11px 12px;">
+                            <button onClick="{{ rx.m2.onLike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m2.likeBg }}; color:{{ rx.m2.likeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m2.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m2.likeCount }}</span></button>
+                            <button onClick="{{ rx.m2.onDislike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m2.dislikeBg }}; color:{{ rx.m2.dislikeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m2.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m2.dislikeCount }}</span></button>
+                            <div style="flex:1;"></div>
+                            <button onClick="{{ rx.m2.onComment }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#8a8a8a;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ m2Count }}</span></button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style="flex:none; width:100%; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; padding:4px 18px 0;">
+                        <div style="border:1px solid #232323; border-radius:18px; background:#111; overflow:hidden; box-shadow:0 14px 44px rgba(0,0,0,.45);">
+                          <div style="position:relative; height:360px; background:#243a2a; display:flex; flex-direction:column; justify-content:space-between; padding:22px 16px;">
+                            <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:130px;">BASED</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">Took the trash out</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">Felt unreasonably based</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:8px; padding:11px 12px;">
+                            <button onClick="{{ rx.m3.onLike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m3.likeBg }}; color:{{ rx.m3.likeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m3.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m3.likeCount }}</span></button>
+                            <button onClick="{{ rx.m3.onDislike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m3.dislikeBg }}; color:{{ rx.m3.dislikeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m3.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m3.dislikeCount }}</span></button>
+                            <div style="flex:1;"></div>
+                            <button onClick="{{ rx.m3.onComment }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#8a8a8a;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span style="font-variant-numeric:tabular-nums;">11</span></button>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                    <div data-dotsrow style="display:flex; align-items:center; justify-content:center; gap:10px; padding:14px 0 16px; background:#0a0a0a;">
+                      <button data-nav="prev" style="border:0; background:transparent; padding:4px 6px; cursor:pointer; color:#8a8a8a; display:flex; align-items:center; line-height:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button><sc-for list="{{ feedDots }}" as="d" hint-placeholder-count="3"><button data-page="{{ d.page }}" style="border:0; background:transparent; padding:5px; cursor:pointer; line-height:0;"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ d.fill }}"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.7 1.4 6.8L12 17.8 6 21.2l1.4-6.8L2.3 9.7l6.9-.7z"/></svg></button></sc-for><button data-nav="next" style="border:0; background:transparent; padding:4px 6px; cursor:pointer; color:#8a8a8a; display:flex; align-items:center; line-height:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <!-- PROFILE -->
+                <sc-if value="{{ uShowProfile }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:24px 16px; display:flex; flex-direction:column; align-items:center;">
+                    <div style="width:84px; height:84px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800;">YO</div>
+                    <div style="font-size:21px; font-weight:700; margin-top:14px;">You</div>
+                    <div style="font-size:13px; color:#8a8a8a; font-family:'Geist Mono',monospace; margin-top:3px;">member · banner of memes</div>
+                    <div style="display:flex; gap:10px; margin-top:22px; width:100%;">
+                      <div style="flex:1; border:1px solid #232323; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:24px; font-weight:800; color:#3b82f6;">312</div><div style="font-size:12px; color:#8a8a8a; margin-top:3px;">Liked</div></div>
+                      <div style="flex:1; border:1px solid #232323; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:24px; font-weight:800;">48</div><div style="font-size:12px; color:#8a8a8a; margin-top:3px;">Comments</div></div>
+                      <div style="flex:1; border:1px solid #232323; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:24px; font-weight:800; color:#ef4444;">9</div><div style="font-size:12px; color:#8a8a8a; margin-top:3px;">Disliked</div></div>
+                    </div>
+                  </div>
+                </sc-if>
+
+              </div>
+
+              <!-- bottom tab bar -->
+              <div style="display:flex; border-top:1px solid #1c1c1c; background:#0d0d0d; padding-bottom:22px;">
+                <button onClick="{{ onFeed }}" style="flex:1; border:0; background:transparent; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:{{ tabFeed }}; font-family:inherit;">
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  <span style="font-size:10px; font-weight:600;">Feed</span>
+                </button>
+                <button onClick="{{ onProfile }}" style="flex:1; border:0; background:transparent; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:{{ tabProfile }}; font-family:inherit;">
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span style="font-size:10px; font-weight:600;">Profile</span>
+                </button>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </x-import>
+    </div>
+
+  </div>
+
+  <!-- ===================== SECTION 2: ANDROID + FULL-BLEED ===================== -->
+  <div style="font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6a6a6a; margin-bottom:18px;"><span style="color:#b22234;">★</span>&nbsp;User &middot; Meme Feed &nbsp;<span style="color:#a3a3a3; font-weight:600;">— Android &amp; the full-bleed variation</span></div>
+  <div style="display:flex; gap:48px; align-items:flex-start; margin-bottom:64px;">
+
+    <!-- Frame 1b: Android feed v1 -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">Android &middot; Variation 1 &mdash; Civic Card &nbsp;<span style="color:#3b82f6;">● live — swipe, drag or tap ‹ ›</span></div>
+      <x-import component="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="412px,892px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="background:#0d0d0d;">
+            <div style="display:flex; align-items:center; gap:10px; height:56px; padding:0 16px;">
+              <div style="display:flex; align-items:center; height:22px; border-radius:4px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.14);"><div style="width:24px; height:22px; background:#3c3b6e; display:flex; align-items:center; justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.7 1.4 6.8L12 17.8 6 21.2l1.4-6.8L2.3 9.7l6.9-.7z"/></svg></div><div style="display:flex; flex-direction:column; width:26px; height:22px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#f5f5f5;"></div><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#f5f5f5;"></div></div></div>
+              <span style="font-weight:800; font-size:20px; letter-spacing:-0.5px;">MEMERICA</span>
+              <span style="color:#b22234; font-size:16px; margin-left:-3px;">★</span>
+            </div>
+            <div style="display:flex; height:3px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#e9e9ea;"></div><div style="flex:1; background:#3c3b6e;"></div></div>
+          </div>
+          <div class="app-scroll" data-carousel onScroll="{{ onFeedScroll }}" style="flex:1; display:flex; overflow-x:auto; scroll-snap-type:x mandatory; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:pan-y;">
+
+                      <div style="flex:none; width:100%; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; padding:4px 18px 0;">
+                        <div style="border:1px solid #232323; border-radius:18px; background:#111; overflow:hidden; box-shadow:0 14px 44px rgba(0,0,0,.45);">
+                          <div style="position:relative; height:340px; background:#1e3a5f; display:flex; flex-direction:column; justify-content:space-between; padding:22px 16px;">
+                            <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:140px;">CATS</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">When the red dot</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">finally holds still</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:8px; padding:11px 12px;">
+                            <button onClick="{{ rx.m1.onLike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m1.likeBg }}; color:{{ rx.m1.likeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m1.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m1.likeCount }}</span></button>
+                            <button onClick="{{ rx.m1.onDislike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m1.dislikeBg }}; color:{{ rx.m1.dislikeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m1.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m1.dislikeCount }}</span></button>
+                            <div style="flex:1;"></div>
+                            <button onClick="{{ rx.m1.onComment }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#8a8a8a;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span style="font-variant-numeric:tabular-nums;">24</span></button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style="flex:none; width:100%; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; padding:4px 18px 0;">
+                        <div style="border:1px solid #232323; border-radius:18px; background:#111; overflow:hidden; box-shadow:0 14px 44px rgba(0,0,0,.45);">
+                          <div style="position:relative; height:340px; background:#3a1f24; display:flex; flex-direction:column; justify-content:space-between; padding:22px 16px;">
+                            <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:170px;">GG</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">Me: just one more game</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">The sun: rising</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:8px; padding:11px 12px;">
+                            <button onClick="{{ rx.m2.onLike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m2.likeBg }}; color:{{ rx.m2.likeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m2.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m2.likeCount }}</span></button>
+                            <button onClick="{{ rx.m2.onDislike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m2.dislikeBg }}; color:{{ rx.m2.dislikeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m2.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m2.dislikeCount }}</span></button>
+                            <div style="flex:1;"></div>
+                            <button onClick="{{ rx.m2.onComment }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#8a8a8a;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ m2Count }}</span></button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style="flex:none; width:100%; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; padding:4px 18px 0;">
+                        <div style="border:1px solid #232323; border-radius:18px; background:#111; overflow:hidden; box-shadow:0 14px 44px rgba(0,0,0,.45);">
+                          <div style="position:relative; height:340px; background:#243a2a; display:flex; flex-direction:column; justify-content:space-between; padding:22px 16px;">
+                            <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:130px;">BASED</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">Took the trash out</div>
+                            <div class="meme-cap" style="position:relative; font-size:29px; text-align:center;">Felt unreasonably based</div>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:8px; padding:11px 12px;">
+                            <button onClick="{{ rx.m3.onLike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m3.likeBg }}; color:{{ rx.m3.likeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m3.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m3.likeCount }}</span></button>
+                            <button onClick="{{ rx.m3.onDislike }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:{{ rx.m3.dislikeBg }}; color:{{ rx.m3.dislikeColor }};"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{ rx.m3.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ rx.m3.dislikeCount }}</span></button>
+                            <div style="flex:1;"></div>
+                            <button onClick="{{ rx.m3.onComment }}" style="display:flex; align-items:center; gap:7px; height:40px; padding:0 14px; border:0; border-radius:20px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#8a8a8a;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span style="font-variant-numeric:tabular-nums;">11</span></button>
+                          </div>
+                        </div>
+                      </div>
+
+          </div>
+          <div data-dotsrow style="display:flex; align-items:center; justify-content:center; gap:10px; padding:12px 0; background:#0a0a0a;">
+            <button data-nav="prev" style="border:0; background:transparent; padding:4px 6px; cursor:pointer; color:#8a8a8a; display:flex; align-items:center; line-height:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button><sc-for list="{{ feedDots }}" as="d" hint-placeholder-count="3"><button data-page="{{ d.page }}" style="border:0; background:transparent; padding:5px; cursor:pointer; line-height:0;"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ d.fill }}"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.7 1.4 6.8L12 17.8 6 21.2l1.4-6.8L2.3 9.7l6.9-.7z"/></svg></button></sc-for><button data-nav="next" style="border:0; background:transparent; padding:4px 6px; cursor:pointer; color:#8a8a8a; display:flex; align-items:center; line-height:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+          <div style="display:flex; border-top:1px solid #1c1c1c; background:#0d0d0d;">
+            <div style="flex:1; padding:8px 0; display:flex; flex-direction:column; align-items:center; gap:4px; color:#3b82f6;"><div style="background:rgba(59,130,246,.18); border-radius:14px; padding:3px 18px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span style="font-size:11px; font-weight:600;">Feed</span></div>
+            <div style="flex:1; padding:8px 0; display:flex; flex-direction:column; align-items:center; gap:4px; color:#6a6a6a;"><div style="padding:3px 18px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span style="font-size:11px; font-weight:600;">Profile</span></div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <!-- Frame 1c: iOS feed v2 full-bleed -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; Variation 2 &mdash; Full Bleed &nbsp;<span style="color:#3b82f6;">● live</span></div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; position:relative; background:#3a1f24; font-family:'Geist',sans-serif; overflow:hidden;">
+          <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:230px;">GG</div>
+          <div class="meme-cap" style="position:absolute; top:120px; left:0; right:64px; font-size:34px; text-align:center; padding:0 18px;">Me: just one more game</div>
+          <div class="meme-cap" style="position:absolute; bottom:230px; left:0; right:64px; font-size:34px; text-align:center; padding:0 18px;">The sun: rising</div>
+          <div style="position:absolute; top:50px; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:6px 16px;">
+            <div style="display:flex; align-items:center; gap:8px;"><div style="display:flex; height:18px; border-radius:3px; overflow:hidden;"><div style="width:4px; background:#ef4444;"></div><div style="width:4px; background:#fff;"></div><div style="width:4px; background:#3b82f6;"></div></div><span style="font-weight:800; font-size:18px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.6);">MEMERICA</span></div>
+            <span style="font-size:12px; font-weight:600; color:#fff; background:rgba(0,0,0,.35); padding:5px 11px; border-radius:999px;">For You</span>
+          </div>
+          <div style="position:absolute; right:12px; bottom:150px; display:flex; flex-direction:column; gap:20px; align-items:center;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+              <button onClick="{{ rx.m2.onLike }}" style="width:52px; height:52px; border:0; border-radius:50%; display:flex; align-items:center; justify-content:center; background:{{ rx.m2.railLikeBg }}; color:{{ rx.m2.railLikeColor }};"><svg width="26" height="26" viewBox="0 0 24 24" fill="{{ rx.m2.likeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg></button>
+              <span style="font-size:12px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); font-variant-numeric:tabular-nums;">{{ rx.m2.likeCount }}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+              <button onClick="{{ rx.m2.onDislike }}" style="width:52px; height:52px; border:0; border-radius:50%; display:flex; align-items:center; justify-content:center; background:{{ rx.m2.railDislikeBg }}; color:{{ rx.m2.railDislikeColor }};"><svg width="26" height="26" viewBox="0 0 24 24" fill="{{ rx.m2.dislikeFill }}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg></button>
+              <span style="font-size:12px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); font-variant-numeric:tabular-nums;">{{ rx.m2.dislikeCount }}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+              <div style="width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.16); color:#fff;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div>
+              <span style="font-size:12px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); font-variant-numeric:tabular-nums;">{{ m2Count }}</span>
+            </div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:24px 16px 44px; background:linear-gradient(transparent, rgba(0,0,0,.55)); display:flex; flex-direction:column; gap:9px;">
+            <div style="font-size:14px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7);"><span style="color:#fff;">★</span> Posted to <strong>{{ spaceName }}</strong></div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+  </div>
+
+  <!-- ===================== SECTION 3: REACTIONS & COMMENTS ===================== -->
+  <div style="font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6a6a6a; margin-bottom:18px;"><span style="color:#b22234;">★</span>&nbsp;Reactions &amp; Comments &nbsp;<span style="color:#a3a3a3; font-weight:600;">— the full thread on a single meme</span></div>
+  <div style="display:flex; gap:48px; align-items:flex-start; margin-bottom:64px;">
+
+    <!-- Frame 2a: iOS comments -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; Comment thread &nbsp;<span style="color:#3b82f6;">● live — type &amp; send</span></div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" keyboard="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="padding:54px 12px 12px; display:flex; align-items:center; gap:6px; border-bottom:1px solid #1c1c1c; background:#0d0d0d;">
+            <span style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:#fafafa;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span>
+            <span style="font-size:17px; font-weight:700;">Comments</span>
+          </div>
+          <div class="app-scroll" style="flex:1; overflow:auto;">
+            <div style="display:flex; gap:10px; padding:14px 16px; border-bottom:1px solid #161616; align-items:center;">
+              <div class="meme-cap" style="width:48px; height:48px; border-radius:8px; background:#3a1f24; display:flex; align-items:center; justify-content:center; font-size:11px; flex:none;">GG</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:600; color:#e8e8e8;">Me: just one more game. The sun: rising</div>
+                <div style="display:flex; gap:14px; margin-top:5px; font-size:12px;"><span style="color:#3b82f6; font-weight:600;">▲ {{ rx.m2.likeCount }}</span><span style="color:#ef4444; font-weight:600;">▼ {{ rx.m2.dislikeCount }}</span><span style="color:#7a7a7a;">{{ m2Count }} comments</span></div>
+              </div>
+            </div>
+            <sc-for list="{{ m2Comments }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex; gap:11px; padding:13px 16px;">
+                <div style="width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:{{ c.color }};">{{ c.initials }}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-size:13px; font-weight:600;">{{ c.author }}</span><span style="font-size:11px; color:#6a6a6a;">{{ c.time }}</span></div>
+                  <div style="font-size:14px; color:#d4d4d4; line-height:1.45; margin-top:2px;">{{ c.text }}</div>
+                  <div style="display:flex; gap:6px; margin-top:8px; align-items:center;"><button onClick="{{ c.onUp }}" style="display:flex; align-items:center; gap:5px; border:0; background:transparent; padding:3px 6px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:{{ c.upColor }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ c.upFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ c.upCount }}</span></button><button onClick="{{ c.onDown }}" style="display:flex; align-items:center; gap:5px; border:0; background:transparent; padding:3px 6px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:{{ c.downColor }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ c.downFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ c.downCount }}</span></button><span style="font-size:12px; color:#7a7a7a; font-weight:600; padding:3px 6px;">Reply</span></div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="height:8px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px; padding:9px 12px; border-top:1px solid #1c1c1c; background:#0d0d0d;">
+            <div style="width:32px; height:32px; border-radius:50%; flex:none; background:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">YO</div>
+            <input value="{{ composer2 }}" onChange="{{ setComposer2 }}" placeholder="Add a comment…" style="flex:1; height:40px; border-radius:20px; border:1px solid #2a2a2a; background:#161616; color:#fafafa; padding:0 16px; font-size:14px; outline:none; font-family:inherit;" />
+            <button onClick="{{ sendM2 }}" style="width:40px; height:40px; border:0; border-radius:50%; background:#3b82f6; color:#fff; display:flex; align-items:center; justify-content:center; flex:none;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></button>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <!-- Frame 2b: Android comments -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">Android &middot; Comment thread</div>
+      <x-import component="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" keyboard="{{ true }}" hint-size="412px,892px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="padding:8px 12px; display:flex; align-items:center; gap:8px; background:#0d0d0d;">
+            <span style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:#fafafa;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+            <span style="font-size:20px; font-weight:600;">Comments</span>
+          </div>
+          <div class="app-scroll" style="flex:1; overflow:auto;">
+            <div style="display:flex; gap:10px; padding:14px 16px; border-bottom:1px solid #161616; align-items:center;">
+              <div class="meme-cap" style="width:48px; height:48px; border-radius:8px; background:#3a1f24; display:flex; align-items:center; justify-content:center; font-size:11px; flex:none;">GG</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:600; color:#e8e8e8;">Me: just one more game. The sun: rising</div>
+                <div style="display:flex; gap:14px; margin-top:5px; font-size:12px;"><span style="color:#3b82f6; font-weight:600;">▲ {{ rx.m2.likeCount }}</span><span style="color:#ef4444; font-weight:600;">▼ {{ rx.m2.dislikeCount }}</span><span style="color:#7a7a7a;">{{ m2Count }} comments</span></div>
+              </div>
+            </div>
+            <sc-for list="{{ m2Comments }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex; gap:11px; padding:13px 16px;">
+                <div style="width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:{{ c.color }};">{{ c.initials }}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-size:13px; font-weight:600;">{{ c.author }}</span><span style="font-size:11px; color:#6a6a6a;">{{ c.time }}</span></div>
+                  <div style="font-size:14px; color:#d4d4d4; line-height:1.45; margin-top:2px;">{{ c.text }}</div>
+                  <div style="display:flex; gap:6px; margin-top:8px; align-items:center;"><button onClick="{{ c.onUp }}" style="display:flex; align-items:center; gap:5px; border:0; background:transparent; padding:3px 6px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:{{ c.upColor }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ c.upFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ c.upCount }}</span></button><button onClick="{{ c.onDown }}" style="display:flex; align-items:center; gap:5px; border:0; background:transparent; padding:3px 6px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:{{ c.downColor }};"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{ c.downFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg><span style="font-variant-numeric:tabular-nums;">{{ c.downCount }}</span></button><span style="font-size:12px; color:#7a7a7a; font-weight:600; padding:3px 6px;">Reply</span></div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="height:8px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px; padding:9px 12px; border-top:1px solid #1c1c1c; background:#0d0d0d;">
+            <div style="width:32px; height:32px; border-radius:50%; flex:none; background:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">YO</div>
+            <input value="{{ composer2 }}" onChange="{{ setComposer2 }}" placeholder="Add a comment…" style="flex:1; height:42px; border-radius:21px; border:1px solid #2a2a2a; background:#161616; color:#fafafa; padding:0 16px; font-size:14px; outline:none; font-family:inherit;" />
+            <button onClick="{{ sendM2 }}" style="width:42px; height:42px; border:0; border-radius:50%; background:#3b82f6; color:#fff; display:flex; align-items:center; justify-content:center; flex:none;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></button>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+  </div>
+
+  <!-- ===================== SECTION 4: ADMIN UPLOAD & PUBLISH ===================== -->
+  <div style="font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6a6a6a; margin-bottom:18px;"><span style="color:#b22234;">★</span>&nbsp;Admin &middot; Upload &amp; Publish &nbsp;<span style="color:#a3a3a3; font-weight:600;">— tags drive who it reaches; toggle Draft → Published</span></div>
+  <div style="display:flex; gap:48px; align-items:flex-start; margin-bottom:64px;">
+
+    <!-- Frame 3a: iOS upload -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; New post &nbsp;<span style="color:#3b82f6;">● live — pick tags, publish</span></div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="background:#0d0d0d; padding:50px 16px 0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; height:44px;">
+              <div style="display:flex; align-items:center; gap:9px;"><div style="display:flex; height:18px; border-radius:3px; overflow:hidden;"><div style="width:4px; background:#ef4444;"></div><div style="width:4px; background:#f5f5f5;"></div><div style="width:4px; background:#3b82f6;"></div></div><span style="font-weight:800; font-size:18px; letter-spacing:-0.4px;">MEMERICA</span><span style="font-size:10px; font-weight:700; letter-spacing:.08em; color:#eab308; border:1px solid rgba(234,179,8,.4); border-radius:5px; padding:1px 6px; text-transform:uppercase;">Admin</span></div>
+            </div>
+            <div style="font-size:24px; font-weight:700; letter-spacing:-0.5px; padding:6px 0 12px;">New Post</div>
+            <div style="display:flex; height:3px; margin:0 -16px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#e9e9ea;"></div><div style="flex:1; background:#3c3b6e;"></div></div>
+          </div>
+          <div class="app-scroll" style="flex:1; overflow:auto; padding:16px;">
+            <!-- image -->
+            <div style="position:relative; border-radius:14px; overflow:hidden; border:1px solid #232323;">
+              <div style="position:relative; height:220px; background:#243a2a; display:flex; flex-direction:column; justify-content:space-between; padding:18px 16px;">
+                <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:110px;">BASED</div>
+                <div class="meme-cap" style="position:relative; font-size:24px; text-align:center;">Took the trash out</div>
+                <div class="meme-cap" style="position:relative; font-size:24px; text-align:center;">Felt unreasonably based</div>
+              </div>
+              <button style="position:absolute; top:10px; right:10px; border:0; background:rgba(0,0,0,.5); color:#fff; font-family:inherit; font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; backdrop-filter:blur(4px);">Replace</button>
+              <div style="position:absolute; bottom:10px; left:10px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.5); padding:5px 10px; border-radius:999px; backdrop-filter:blur(4px);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span style="font-size:11px; color:#cfcfcf; font-family:'Geist Mono',monospace;">s3://memerica-bucket</span></div>
+            </div>
+            <!-- caption -->
+            <div style="margin-top:18px;">
+              <div style="font-size:13px; font-weight:600; color:#cfcfcf; margin-bottom:7px;">Caption</div>
+              <input value="" placeholder="Optional — add a line" style="width:100%; height:42px; border-radius:10px; border:1px solid #2a2a2a; background:#131313; color:#fafafa; padding:0 14px; font-size:14px; outline:none; font-family:inherit;" />
+            </div>
+            <!-- tags -->
+            <div style="margin-top:18px;">
+              <div style="font-size:13px; font-weight:600; color:#cfcfcf;">Tags</div>
+              <div style="font-size:12px; color:#7a7a7a; margin:4px 0 11px;">These decide which members get it.</div>
+              <div style="display:flex; flex-wrap:wrap; gap:9px;">
+                <sc-for list="{{ uploadTagsList }}" as="t" hint-placeholder-count="6">
+                  <button onClick="{{ t.onToggle }}" style="display:flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:19px; font-size:14px; font-weight:600; font-family:inherit; background:{{ t.chipBg }}; color:{{ t.chipColor }}; border:1px solid {{ t.chipBorder }};"><span>{{ t.label }}</span><span style="opacity:.7; font-size:12px;">{{ t.mark }}</span></button>
+                </sc-for>
+                <button onClick="{{ startNewTag }}" style="display:flex; align-items:center; gap:6px; height:38px; padding:0 14px; border-radius:19px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#7eb0ff; border:1.5px dashed rgba(59,130,246,.55);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>New tag</button>
+              </div>
+              <sc-if value="{{ creatingTag }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px; border:1px solid #2a2a2a; border-radius:14px; background:#0e0e0e; padding:14px;">
+                  <div style="font-size:13px; font-weight:600; color:#cfcfcf; margin-bottom:9px;">Create a tag</div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px; color:#7a7a7a;">#</span>
+                    <input value="{{ newTagName }}" onChange="{{ setNewTagName }}" placeholder="new tag name" style="flex:1; height:40px; border:1px solid #2a2a2a; border-radius:10px; background:#161616; color:#fafafa; padding:0 13px; font-size:14px; outline:none; font-family:inherit;" />
+                  </div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 8px;">
+                    <span style="font-size:13px; font-weight:600; color:#cfcfcf;">Assign to members</span>
+                    <span style="font-size:12px; color:#22c55e; font-weight:600;">{{ newTagCountLabel }}</span>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <sc-for list="{{ newTagMemberList }}" as="m" hint-placeholder-count="5">
+                      <button onClick="{{ m.onToggle }}" style="display:flex; align-items:center; gap:11px; border:0; background:transparent; padding:7px 4px; font-family:inherit; text-align:left;">
+                        <div style="width:32px; height:32px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:{{ m.color }};">{{ m.initials }}</div>
+                        <span style="flex:1; font-size:14px; font-weight:600; color:#e8e8e8;">{{ m.name }}</span>
+                        <span style="width:24px; height:24px; border-radius:7px; border:1.5px solid {{ m.chkBorder }}; background:{{ m.chkBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700;">{{ m.mark }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex; gap:9px; margin-top:14px;">
+                    <button onClick="{{ cancelNewTag }}" style="flex:none; height:42px; padding:0 16px; border:1px solid #2a2a2a; border-radius:10px; background:transparent; color:#cfcfcf; font-size:14px; font-weight:600; font-family:inherit;">Cancel</button>
+                    <button onClick="{{ createTag }}" style="flex:1; height:42px; border:0; border-radius:10px; background:{{ createBtnBg }}; color:{{ createBtnColor }}; font-size:14px; font-weight:700; font-family:inherit;">Create &amp; add to post</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+            <!-- audience -->
+            <div style="margin-top:18px; border:1px solid #232323; border-radius:14px; background:#111; padding:15px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:13px; font-weight:600; color:#cfcfcf;">Audience</span>
+                <span style="font-size:13px; font-weight:700; color:#3b82f6; font-variant-numeric:tabular-nums;">{{ audCount }} of {{ audTotal }} match</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:-6px; margin-top:12px;">
+                <sc-for list="{{ audAvatars }}" as="a" hint-placeholder-count="4">
+                  <div style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; background:{{ a.color }}; box-shadow:0 0 0 2px #111; margin-right:-6px;">{{ a.initials }}</div>
+                </sc-for>
+              </div>
+              <div style="font-size:12px; color:#8a8a8a; margin-top:10px; line-height:1.5;">{{ audNames }} will see posts tagged {{ upLabels }}.</div>
+            </div>
+            <!-- publish -->
+            <div style="margin-top:18px;">
+              <div style="display:flex; background:#131313; border:1px solid #232323; border-radius:11px; padding:4px; gap:4px;">
+                <button onClick="{{ onDraft }}" style="flex:1; height:36px; border:0; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; background:{{ draftBg }}; color:{{ draftColor }};">Draft</button>
+                <button onClick="{{ onPublish }}" style="flex:1; height:36px; border:0; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; background:{{ pubBg }}; color:{{ pubColor }};">Published</button>
+              </div>
+              <div style="font-size:12px; font-weight:600; margin-top:10px; color:{{ pubStatusColor }};">{{ pubStatusLabel }}</div>
+              <button onClick="{{ sendPost }}" style="width:100%; height:48px; border:0; border-radius:12px; background:#3b82f6; color:#fff; font-size:15px; font-weight:700; font-family:inherit; margin-top:14px;">{{ pubBtnLabel }}</button>
+            </div>
+            <div style="height:8px;"></div>
+          </div>
+          <div style="display:flex; border-top:1px solid #1c1c1c; background:#0d0d0d; padding-bottom:22px;">
+            <div style="flex:1; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:#3b82f6;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-size:10px; font-weight:600;">Upload</span></div>
+            <div style="flex:1; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:#5c5c5c;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg><span style="font-size:10px; font-weight:600;">Tags</span></div>
+            <div style="flex:1; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:#5c5c5c;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span style="font-size:10px; font-weight:600;">Members</span></div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <!-- Frame 3b: Android upload -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">Android &middot; New post</div>
+      <x-import component="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="412px,892px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="background:#0d0d0d;">
+            <div style="display:flex; align-items:center; gap:10px; padding:10px 16px;"><span style="color:#fafafa;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span style="font-size:20px; font-weight:600;">New Post</span></div>
+            <div style="display:flex; height:3px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#e9e9ea;"></div><div style="flex:1; background:#3c3b6e;"></div></div>
+          </div>
+          <div class="app-scroll" style="flex:1; overflow:auto; padding:16px;">
+            <div style="position:relative; border-radius:16px; overflow:hidden; border:1px solid #232323;">
+              <div style="position:relative; height:210px; background:#243a2a; display:flex; flex-direction:column; justify-content:space-between; padding:18px 16px;">
+                <div class="meme-wm" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:110px;">BASED</div>
+                <div class="meme-cap" style="position:relative; font-size:23px; text-align:center;">Took the trash out</div>
+                <div class="meme-cap" style="position:relative; font-size:23px; text-align:center;">Felt unreasonably based</div>
+              </div>
+              <div style="position:absolute; bottom:10px; left:10px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.5); padding:5px 10px; border-radius:999px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span style="font-size:11px; color:#cfcfcf; font-family:'Geist Mono',monospace;">s3://memerica-bucket</span></div>
+            </div>
+            <div style="margin-top:18px;">
+              <div style="font-size:13px; font-weight:600; color:#cfcfcf;">Tags</div>
+              <div style="font-size:12px; color:#7a7a7a; margin:4px 0 11px;">These decide which members get it.</div>
+              <div style="display:flex; flex-wrap:wrap; gap:9px;">
+                <sc-for list="{{ uploadTagsList }}" as="t" hint-placeholder-count="6">
+                  <button onClick="{{ t.onToggle }}" style="display:flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:19px; font-size:14px; font-weight:600; font-family:inherit; background:{{ t.chipBg }}; color:{{ t.chipColor }}; border:1px solid {{ t.chipBorder }};"><span>{{ t.label }}</span><span style="opacity:.7; font-size:12px;">{{ t.mark }}</span></button>
+                </sc-for>
+                <button onClick="{{ startNewTag }}" style="display:flex; align-items:center; gap:6px; height:38px; padding:0 14px; border-radius:19px; font-size:14px; font-weight:600; font-family:inherit; background:transparent; color:#7eb0ff; border:1.5px dashed rgba(59,130,246,.55);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>New tag</button>
+              </div>
+              <sc-if value="{{ creatingTag }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px; border:1px solid #2a2a2a; border-radius:14px; background:#0e0e0e; padding:14px;">
+                  <div style="font-size:13px; font-weight:600; color:#cfcfcf; margin-bottom:9px;">Create a tag</div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px; color:#7a7a7a;">#</span>
+                    <input value="{{ newTagName }}" onChange="{{ setNewTagName }}" placeholder="new tag name" style="flex:1; height:40px; border:1px solid #2a2a2a; border-radius:10px; background:#161616; color:#fafafa; padding:0 13px; font-size:14px; outline:none; font-family:inherit;" />
+                  </div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 8px;">
+                    <span style="font-size:13px; font-weight:600; color:#cfcfcf;">Assign to members</span>
+                    <span style="font-size:12px; color:#22c55e; font-weight:600;">{{ newTagCountLabel }}</span>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <sc-for list="{{ newTagMemberList }}" as="m" hint-placeholder-count="5">
+                      <button onClick="{{ m.onToggle }}" style="display:flex; align-items:center; gap:11px; border:0; background:transparent; padding:7px 4px; font-family:inherit; text-align:left;">
+                        <div style="width:32px; height:32px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:{{ m.color }};">{{ m.initials }}</div>
+                        <span style="flex:1; font-size:14px; font-weight:600; color:#e8e8e8;">{{ m.name }}</span>
+                        <span style="width:24px; height:24px; border-radius:7px; border:1.5px solid {{ m.chkBorder }}; background:{{ m.chkBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700;">{{ m.mark }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex; gap:9px; margin-top:14px;">
+                    <button onClick="{{ cancelNewTag }}" style="flex:none; height:42px; padding:0 16px; border:1px solid #2a2a2a; border-radius:10px; background:transparent; color:#cfcfcf; font-size:14px; font-weight:600; font-family:inherit;">Cancel</button>
+                    <button onClick="{{ createTag }}" style="flex:1; height:42px; border:0; border-radius:10px; background:{{ createBtnBg }}; color:{{ createBtnColor }}; font-size:14px; font-weight:700; font-family:inherit;">Create &amp; add to post</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="margin-top:18px; border:1px solid #232323; border-radius:16px; background:#111; padding:15px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:13px; font-weight:600; color:#cfcfcf;">Audience</span><span style="font-size:13px; font-weight:700; color:#3b82f6; font-variant-numeric:tabular-nums;">{{ audCount }} of {{ audTotal }} match</span></div>
+              <div style="display:flex; align-items:center; margin-top:12px;">
+                <sc-for list="{{ audAvatars }}" as="a" hint-placeholder-count="4">
+                  <div style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; background:{{ a.color }}; box-shadow:0 0 0 2px #111; margin-right:-6px;">{{ a.initials }}</div>
+                </sc-for>
+              </div>
+              <div style="font-size:12px; color:#8a8a8a; margin-top:10px; line-height:1.5;">{{ audNames }} will see posts tagged {{ upLabels }}.</div>
+            </div>
+            <div style="margin-top:18px;">
+              <div style="display:flex; background:#131313; border:1px solid #232323; border-radius:11px; padding:4px; gap:4px;">
+                <button onClick="{{ onDraft }}" style="flex:1; height:38px; border:0; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; background:{{ draftBg }}; color:{{ draftColor }};">Draft</button>
+                <button onClick="{{ onPublish }}" style="flex:1; height:38px; border:0; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; background:{{ pubBg }}; color:{{ pubColor }};">Published</button>
+              </div>
+              <div style="font-size:12px; font-weight:600; margin-top:10px; color:{{ pubStatusColor }};">{{ pubStatusLabel }}</div>
+              <button onClick="{{ sendPost }}" style="width:100%; height:48px; border:0; border-radius:24px; background:#3b82f6; color:#fff; font-size:15px; font-weight:700; font-family:inherit; margin-top:14px;">{{ pubBtnLabel }}</button>
+            </div>
+            <div style="height:8px;"></div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+  </div>
+
+  <!-- ===================== SECTION 5: ADMIN TAG MANAGEMENT ===================== -->
+  <div style="font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6a6a6a; margin-bottom:18px;"><span style="color:#b22234;">★</span>&nbsp;Admin &middot; Tag Management &nbsp;<span style="color:#a3a3a3; font-weight:600;">— create tags &amp; assign them to members</span></div>
+  <div style="display:flex; gap:48px; align-items:flex-start; margin-bottom:64px;">
+
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; Tags &amp; assignments</div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="background:#0d0d0d; padding:50px 16px 0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; height:44px;">
+              <div style="display:flex; align-items:center; gap:9px;"><div style="display:flex; height:18px; border-radius:3px; overflow:hidden;"><div style="width:4px; background:#ef4444;"></div><div style="width:4px; background:#f5f5f5;"></div><div style="width:4px; background:#3b82f6;"></div></div><span style="font-weight:800; font-size:18px;">MEMERICA</span><span style="font-size:10px; font-weight:700; letter-spacing:.08em; color:#eab308; border:1px solid rgba(234,179,8,.4); border-radius:5px; padding:1px 6px;">ADMIN</span></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0 12px;">
+              <span style="font-size:24px; font-weight:700; letter-spacing:-0.5px;">Tags</span>
+              <button style="display:flex; align-items:center; gap:6px; height:34px; padding:0 13px; border:0; border-radius:17px; background:#3b82f6; color:#fff; font-size:13px; font-weight:600; font-family:inherit;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>New Tag</button>
+            </div>
+            <div style="display:flex; height:3px; margin:0 -16px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#e9e9ea;"></div><div style="flex:1; background:#3c3b6e;"></div></div>
+          </div>
+          <div class="app-scroll" style="flex:1; overflow:auto; padding:14px 16px 16px;">
+            <div style="font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#7a7a7a; margin-bottom:9px;">All Tags</div>
+            <div style="border:1px solid #232323; border-radius:14px; background:#111; overflow:hidden;">
+              <sc-for list="{{ tagStats }}" as="t" hint-placeholder-count="6">
+                <div style="display:flex; align-items:center; gap:12px; padding:13px 15px; border-bottom:1px solid #1a1a1a;">
+                  <span style="width:11px; height:11px; border-radius:3px; flex:none; background:{{ t.dot }};"></span>
+                  <span style="flex:1; font-size:15px; font-weight:600;">{{ t.label }}</span>
+                  <span style="font-size:12px; color:#8a8a8a; font-variant-numeric:tabular-nums;">{{ t.members }} members · {{ t.posts }} posts</span>
+                  <svg width="8" height="14" viewBox="0 0 8 14" style="flex:none;"><path d="M1 1l6 6-6 6" stroke="#4a4a4a" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#7a7a7a; margin:22px 0 9px;">Member Tags</div>
+            <div style="font-size:12px; color:#7a7a7a; margin-bottom:11px;">Assign tags to decide each member's feed.</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <sc-for list="{{ membersList }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; gap:12px; border:1px solid #232323; border-radius:14px; background:#111; padding:12px 14px;">
+                  <div style="width:38px; height:38px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; background:{{ m.color }};">{{ m.initials }}</div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:14px; font-weight:600;">{{ m.name }}</div>
+                    <div style="font-size:12px; color:#7eb0ff; font-family:'Geist Mono',monospace; margin-top:2px;">{{ m.tagStr }}</div>
+                  </div>
+                  <span style="color:#6a6a6a;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height:8px;"></div>
+          </div>
+          <div style="display:flex; border-top:1px solid #1c1c1c; background:#0d0d0d; padding-bottom:22px;">
+            <div style="flex:1; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:#5c5c5c;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span style="font-size:10px; font-weight:600;">Upload</span></div>
+            <div style="flex:1; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:#3b82f6;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg><span style="font-size:10px; font-weight:600;">Tags</span></div>
+            <div style="flex:1; padding:9px 0 7px; display:flex; flex-direction:column; align-items:center; gap:3px; color:#5c5c5c;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span style="font-size:10px; font-weight:600;">Members</span></div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+  </div>
+
+  <!-- ===================== SECTION 6: INVITE & ONBOARDING ===================== -->
+  <div style="font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6a6a6a; margin-bottom:18px;"><span style="color:#b22234;">★</span>&nbsp;Invite &amp; Onboarding &nbsp;<span style="color:#a3a3a3; font-weight:600;">— admin invites members; new members pick their tags</span></div>
+  <div style="display:flex; gap:48px; align-items:flex-start; margin-bottom:24px;">
+
+    <!-- Frame 5a: iOS invite (admin) -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; Admin invites a member</div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div style="background:#0d0d0d; padding:50px 16px 0;">
+            <div style="display:flex; align-items:center; gap:9px; height:44px;"><div style="display:flex; height:18px; border-radius:3px; overflow:hidden;"><div style="width:4px; background:#ef4444;"></div><div style="width:4px; background:#f5f5f5;"></div><div style="width:4px; background:#3b82f6;"></div></div><span style="font-weight:800; font-size:18px;">MEMERICA</span><span style="font-size:10px; font-weight:700; color:#eab308; border:1px solid rgba(234,179,8,.4); border-radius:5px; padding:1px 6px;">ADMIN</span></div>
+            <div style="font-size:24px; font-weight:700; letter-spacing:-0.5px; padding:6px 0 12px;">Members</div>
+            <div style="display:flex; height:3px; margin:0 -16px;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#e9e9ea;"></div><div style="flex:1; background:#3c3b6e;"></div></div>
+          </div>
+          <div class="app-scroll" style="flex:1; overflow:auto; padding:16px;">
+            <div style="border:1px solid #232323; border-radius:14px; background:#111; padding:15px;">
+              <div style="font-size:13px; font-weight:600; color:#cfcfcf; margin-bottom:9px;">Invite to {{ spaceName }}</div>
+              <div style="display:flex; gap:8px;">
+                <div style="flex:1; height:42px; border:1px solid #2a2a2a; border-radius:10px; background:#131313; display:flex; align-items:center; padding:0 13px; font-size:13px; color:#a3a3a3; font-family:'Geist Mono',monospace; overflow:hidden; white-space:nowrap;">manasync.app/join/bk-4f9a</div>
+                <button style="height:42px; padding:0 16px; border:0; border-radius:10px; background:#3b82f6; color:#fff; font-size:13px; font-weight:600; font-family:inherit; display:flex; align-items:center; gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Copy</button>
+              </div>
+              <div style="height:1px; background:#1f1f1f; margin:15px 0;"></div>
+              <div style="display:flex; gap:8px;">
+                <input value="" placeholder="name@email.com" style="flex:1; height:42px; border:1px solid #2a2a2a; border-radius:10px; background:#131313; color:#fafafa; padding:0 13px; font-size:14px; outline:none; font-family:inherit;" />
+                <button style="height:42px; padding:0 16px; border:0; border-radius:10px; background:#262626; color:#fafafa; font-size:13px; font-weight:600; font-family:inherit;">Send invite</button>
+              </div>
+            </div>
+
+            <div style="font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#7a7a7a; margin:22px 0 9px;">Pending Invitations</div>
+            <div style="border:1px solid #232323; border-radius:14px; background:#111; overflow:hidden;">
+              <div style="display:flex; align-items:center; gap:12px; padding:13px 15px; border-bottom:1px solid #1a1a1a;">
+                <div style="width:36px; height:36px; border-radius:50%; flex:none; background:#262626; display:flex; align-items:center; justify-content:center; color:#8a8a8a;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600;">Jordan H.</div><div style="font-size:12px; color:#7a7a7a; margin-top:1px;">Invited 2d ago &middot; not joined yet</div></div>
+                <span style="font-size:12px; font-weight:600; color:#3b82f6;">Resend</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; padding:13px 15px;">
+                <div style="width:36px; height:36px; border-radius:50%; flex:none; background:#262626; display:flex; align-items:center; justify-content:center; color:#8a8a8a;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600;">Sam P.</div><div style="font-size:12px; color:#7a7a7a; margin-top:1px;">Invited 5h ago &middot; not joined yet</div></div>
+                <span style="font-size:12px; font-weight:600; color:#3b82f6;">Resend</span>
+              </div>
+            </div>
+
+            <div style="font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#7a7a7a; margin:22px 0 9px;">Members &middot; {{ audTotal }}</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ membersList }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; gap:11px; border:1px solid #232323; border-radius:12px; background:#111; padding:10px 13px;">
+                  <div style="width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:{{ m.color }};">{{ m.initials }}</div>
+                  <span style="flex:1; font-size:14px; font-weight:600;">{{ m.name }}</span>
+                  <span style="font-size:12px; color:#7a7a7a;">{{ m.count }} tags</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height:8px;"></div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <!-- Frame 5b: iOS onboarding (new member) -->
+    <div style="flex:none;">
+      <div style="font-size:12px; font-weight:600; color:#444; margin-bottom:12px;">iOS &middot; New member onboarding</div>
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#0a0a0a; color:#fafafa; font-family:'Geist',sans-serif;">
+          <div class="app-scroll" style="flex:1; overflow:auto; padding:72px 22px 16px;">
+            <div style="display:flex; width:122px; height:76px; border-radius:8px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.1), 0 14px 36px rgba(0,0,0,.55);">
+              <div style="width:52px; background:#3c3b6e; display:flex; align-items:center; justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.7 1.4 6.8L12 17.8 6 21.2l1.4-6.8L2.3 9.7l6.9-.7z"/></svg></div>
+              <div style="flex:1; display:flex; flex-direction:column;"><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#f5f5f5;"></div><div style="flex:1; background:#b22234;"></div><div style="flex:1; background:#f5f5f5;"></div><div style="flex:1; background:#b22234;"></div></div>
+            </div>
+            <div style="font-size:30px; font-weight:800; letter-spacing:-1px; margin-top:22px; line-height:1.08;">Welcome to<br/>MEMERICA <span style="color:#b22234;">★</span></div>
+            <div style="font-size:15px; color:#9a9a9a; margin-top:12px; line-height:1.55;">You're in the <strong style="color:#e8e8e8;">{{ spaceName }}</strong> space. The admin handpicks every meme that lands in your feed — just swipe, react, and sound off. No setup, no tags to manage.</div>
+            <div style="display:flex; flex-direction:column; gap:16px; margin-top:30px;">
+              <div style="display:flex; align-items:center; gap:13px;"><div style="width:38px; height:38px; border-radius:10px; flex:none; background:rgba(178,34,52,.16); display:flex; align-items:center; justify-content:center; color:#ef6b78;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/><path d="m15 18 6-6-6-6" opacity=".4"/></svg></div><div style="font-size:14px; color:#d4d4d4;"><strong style="color:#fff;">Swipe</strong> through a fresh, curated stack</div></div>
+              <div style="display:flex; align-items:center; gap:13px;"><div style="width:38px; height:38px; border-radius:10px; flex:none; background:rgba(59,130,246,.16); display:flex; align-items:center; justify-content:center; color:#7eb0ff;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg></div><div style="font-size:14px; color:#d4d4d4;"><strong style="color:#fff;">Like or dislike</strong> — your call, partner</div></div>
+              <div style="display:flex; align-items:center; gap:13px;"><div style="width:38px; height:38px; border-radius:10px; flex:none; background:rgba(245,245,245,.1); display:flex; align-items:center; justify-content:center; color:#d4d4d4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div><div style="font-size:14px; color:#d4d4d4;"><strong style="color:#fff;">Comment</strong> and run the thread</div></div>
+            </div>
+          </div>
+          <div style="padding:14px 22px 40px; background:linear-gradient(transparent, #0a0a0a 30%);">
+            <button style="width:100%; height:52px; border:0; border-radius:14px; background:#3b82f6; color:#fff; font-size:16px; font-weight:700; font-family:inherit;">Start the feed</button>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;spaceName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Banner of Memes&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    userTab: 'feed',
+    userScreen: 'feed',
+    activeMeme: 'm2',
+    composer: '',
+    rx: {
+      m1: { vote: 0, like: 842, dislike: 17 },
+      m2: { vote: 1, like: 1290, dislike: 44 },
+      m3: { vote: 0, like: 503, dislike: 9 },
+    },
+    comments: {
+      m2: [
+        { id: 'c1', author: 'Dustin', initials: 'DU', color: '#ef4444', text: 'this is too real, deleted my sleep schedule', time: '1h', up: 42 },
+        { id: 'c2', author: 'Priya', initials: 'PR', color: '#3b82f6', text: 'GG to whoever made this', time: '47m', up: 18 },
+        { id: 'c3', author: 'Marco', initials: 'MA', color: '#22c55e', text: 'based and accurate', time: '12m', up: 7 },
+      ],
+      m1: [
+        { id: 'd1', author: 'Priya', initials: 'PR', color: '#3b82f6', text: 'my cat does this exact thing', time: '1h', up: 12 },
+        { id: 'd2', author: 'Marco', initials: 'MA', color: '#22c55e', text: 'certified truth', time: '20m', up: 4 },
+      ],
+      m3: [
+        { id: 'e1', author: 'Dustin', initials: 'DU', color: '#ef4444', text: 'felt this in my soul', time: '3h', up: 9 },
+      ],
+    },
+    uploadTags: { based: true, gaming: true },
+    published: false,
+    composer2: '',
+    feedPage: 0,
+    creatingTag: false,
+    newTagName: '',
+    newTagMembers: {},
+    tagDefs: [
+      { key: 'gaming', label: 'Gaming', dot: '#3b82f6', posts: 28 },
+      { key: 'anime', label: 'Anime', dot: '#ec4899', posts: 14 },
+      { key: 'truth', label: 'Truth', dot: '#eab308', posts: 41 },
+      { key: 'based', label: 'Based', dot: '#22c55e', posts: 33 },
+      { key: 'cats', label: 'Cats', dot: '#f59e0b', posts: 22 },
+      { key: 'dogs', label: 'Dogs', dot: '#06b6d4', posts: 9 },
+    ],
+    members: [
+      { id: 'dustin', name: 'Dustin', initials: 'DU', color: '#ef4444', tags: ['gaming', 'based', 'truth'] },
+      { id: 'priya', name: 'Priya', initials: 'PR', color: '#3b82f6', tags: ['gaming', 'anime', 'cats'] },
+      { id: 'marco', name: 'Marco', initials: 'MA', color: '#22c55e', tags: ['based', 'dogs', 'truth'] },
+      { id: 'avery', name: 'Avery', initials: 'AV', color: '#eab308', tags: ['anime', 'cats'] },
+      { id: 'theo', name: 'Theo', initials: 'TH', color: '#06b6d4', tags: ['dogs', 'truth'] },
+    ],
+  };
+
+  vote(id, dir) {
+    this.setState(s => {
+      const r = { ...s.rx[id] };
+      if (r.vote === 1) r.like--;
+      if (r.vote === -1) r.dislike--;
+      if (r.vote === dir) { r.vote = 0; }
+      else { r.vote = dir; if (dir === 1) r.like++; else r.dislike++; }
+      return { rx: { ...s.rx, [id]: r } };
+    });
+  }
+  openComments(id) { this.setState({ userScreen: 'comments', activeMeme: id }); }
+  back() { this.setState({ userScreen: 'feed' }); }
+  setTab(t) { this.setState({ userTab: t, userScreen: 'feed' }); }
+  setComposer(e) { this.setState({ composer: e.target.value }); }
+  sendComment() {
+    const t = (this.state.composer || '').trim();
+    if (!t) return;
+    const id = this.state.activeMeme;
+    this.setState(s => {
+      const list = (s.comments[id] || []).slice();
+      list.push({ id: 'u' + Date.now(), author: 'You', initials: 'YO', color: '#3b82f6', text: t, time: 'now', up: 0 });
+      return { comments: { ...s.comments, [id]: list }, composer: '' };
+    });
+  }
+  toggleUploadTag(k) { this.setState(s => ({ uploadTags: { ...s.uploadTags, [k]: !s.uploadTags[k] } })); }
+  voteComment(mid, id, dir) {
+    this.setState(s => {
+      const list = (s.comments[mid] || []).map(c => {
+        if (c.id !== id) return c;
+        const r = { ...c, up: c.up || 0, down: c.down || 0, vote: c.vote || 0 };
+        if (r.vote === 1) r.up--;
+        if (r.vote === -1) r.down--;
+        if (r.vote === dir) { r.vote = 0; } else { r.vote = dir; if (dir === 1) r.up++; else r.down++; }
+        return r;
+      });
+      return { comments: { ...s.comments, [mid]: list } };
+    });
+  }
+  startNewTag() { this.setState({ creatingTag: true, newTagName: '', newTagMembers: {} }); }
+  cancelNewTag() { this.setState({ creatingTag: false, newTagName: '', newTagMembers: {} }); }
+  setNewTagName(e) { this.setState({ newTagName: e.target.value }); }
+  toggleNewTagMember(id) { this.setState(s => ({ newTagMembers: { ...s.newTagMembers, [id]: !s.newTagMembers[id] } })); }
+  createTag() {
+    const name = (this.state.newTagName || '').trim();
+    if (!name) return;
+    const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || ('tag' + Date.now());
+    const palette = ['#3b82f6', '#ec4899', '#eab308', '#22c55e', '#f59e0b', '#06b6d4', '#a855f7', '#f97316', '#14b8a6'];
+    this.setState(s => {
+      const exists = s.tagDefs.some(t => t.key === key);
+      const tagDefs = exists ? s.tagDefs : s.tagDefs.concat([{ key, label: name, dot: palette[s.tagDefs.length % palette.length], posts: 1 }]);
+      const members = s.members.map(m => (s.newTagMembers[m.id] && !m.tags.includes(key)) ? { ...m, tags: m.tags.concat([key]) } : m);
+      return { tagDefs, members, uploadTags: { ...s.uploadTags, [key]: true }, creatingTag: false, newTagName: '', newTagMembers: {} };
+    });
+  }
+  setPublished(v) { this.setState({ published: v }); }
+  setComposer2(e) { this.setState({ composer2: e.target.value }); }
+  sendM2() {
+    const t = (this.state.composer2 || '').trim();
+    if (!t) return;
+    this.setState(s => {
+      const list = (s.comments.m2 || []).slice();
+      list.push({ id: 'v' + Date.now(), author: 'You', initials: 'YO', color: '#3b82f6', text: t, time: 'now', up: 0 });
+      return { comments: { ...s.comments, m2: list }, composer2: '' };
+    });
+  }
+
+  fmt(n) { return n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'k' : '' + n; }
+  onFeedScroll(e) { const el = e.target; const p = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (p !== this.state.feedPage) this.setState({ feedPage: p }); }
+
+  componentDidMount() {
+    const carouselOf = (node) => { const row = node.closest('[data-dotsrow]'); if (!row) return null; let el = row.previousElementSibling; while (el && !(el.getAttribute && el.hasAttribute('data-carousel'))) el = el.previousElementSibling; return el || null; };
+    const tween = (c, to) => { const snap = c.style.scrollSnapType; c.style.scrollSnapType = 'none'; c.scrollLeft = to; void c.offsetWidth; c.style.scrollSnapType = snap; };
+    let drag = null;
+    this._down = (e) => { const c = e.target.closest('[data-carousel]'); if (!c) return; drag = { c, x: e.clientX, sl: c.scrollLeft, moved: false }; };
+    this._move = (e) => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 4) drag.moved = true; if (drag.moved) { drag.c.scrollLeft = drag.sl - dx; if (e.cancelable) e.preventDefault(); } };
+    this._up = () => { if (!drag) return; const c = drag.c, moved = drag.moved; drag = null; if (moved) { this._suppress = true; const p = Math.max(0, Math.min(2, Math.round(c.scrollLeft / Math.max(1, c.clientWidth)))); tween(c, p * c.clientWidth); } };
+    this._nav = (e) => {
+      const pg = e.target.closest('[data-page]');
+      if (pg) { const c = carouselOf(pg); if (c) tween(c, parseInt(pg.getAttribute('data-page'), 10) * c.clientWidth); return; }
+      const nv = e.target.closest('[data-nav]');
+      if (nv) { const c = carouselOf(nv); if (c) { const cur = Math.round(c.scrollLeft / Math.max(1, c.clientWidth)); const dir = nv.getAttribute('data-nav') === 'next' ? 1 : -1; const p = Math.max(0, Math.min(2, cur + dir)); tween(c, p * c.clientWidth); } }
+    };
+    this._clickCap = (e) => { if (this._suppress) { this._suppress = false; e.stopPropagation(); e.preventDefault(); } };
+    document.addEventListener('pointerdown', this._down);
+    document.addEventListener('pointermove', this._move);
+    document.addEventListener('pointerup', this._up);
+    document.addEventListener('click', this._clickCap, true);
+    document.addEventListener('click', this._nav);
+  }
+  componentWillUnmount() {
+    document.removeEventListener('pointerdown', this._down);
+    document.removeEventListener('pointermove', this._move);
+    document.removeEventListener('pointerup', this._up);
+    document.removeEventListener('click', this._clickCap, true);
+    document.removeEventListener('click', this._nav);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const BLUE = '#3b82f6', RED = '#ef4444', MUT = '#8a8a8a';
+    const META = {
+      m1: { caption: 'When the red dot finally holds still', stat: '842 liked · 17 disliked' },
+      m2: { caption: 'Me: just one more game. The sun: rising', stat: '1.3k liked · 44 disliked' },
+      m3: { caption: 'Took the trash out, felt unreasonably based', stat: '503 liked · 9 disliked' },
+    };
+    const mk = (id) => {
+      const r = s.rx[id];
+      return {
+        likeCount: this.fmt(r.like),
+        dislikeCount: this.fmt(r.dislike),
+        likeColor: r.vote === 1 ? BLUE : MUT,
+        dislikeColor: r.vote === -1 ? RED : MUT,
+        likeBg: r.vote === 1 ? 'rgba(59,130,246,0.16)' : 'transparent',
+        dislikeBg: r.vote === -1 ? 'rgba(239,68,68,0.16)' : 'transparent',
+        likeFill: r.vote === 1 ? BLUE : 'none',
+        dislikeFill: r.vote === -1 ? RED : 'none',
+        railLikeBg: r.vote === 1 ? BLUE : 'rgba(255,255,255,0.16)',
+        railLikeColor: '#fff',
+        railDislikeBg: r.vote === -1 ? RED : 'rgba(255,255,255,0.16)',
+        railDislikeColor: '#fff',
+        onLike: () => this.vote(id, 1),
+        onDislike: () => this.vote(id, -1),
+        onComment: () => this.openComments(id),
+      };
+    };
+    const rx = {};
+    Object.keys(s.rx).forEach(k => rx[k] = mk(k));
+
+    const MEMBERS = s.members;
+    const upSel = s.tagDefs.filter(t => s.uploadTags[t.key]).map(t => t.key);
+    const matched = MEMBERS.filter(m => m.tags.some(t => upSel.includes(t)));
+    const uploadTagsList = s.tagDefs.map(t => {
+      const sel = !!s.uploadTags[t.key];
+      return { key: t.key, label: t.label, sel, mark: sel ? '✓' : '+', chipBg: sel ? '#3b82f6' : '#161616', chipColor: sel ? '#fff' : '#b4b4b4', chipBorder: sel ? '#3b82f6' : '#2a2a2a', onToggle: () => this.toggleUploadTag(t.key) };
+    });
+    const tagStats = s.tagDefs.map(t => ({
+      label: '#' + t.key, dot: t.dot,
+      members: MEMBERS.filter(m => m.tags.includes(t.key)).length + 1,
+      posts: t.posts,
+    }));
+    const membersList = MEMBERS.map(m => ({ name: m.name, initials: m.initials, color: m.color, tagStr: m.tags.map(t => '#' + t).join('  '), count: m.tags.length }));
+    const newTagMemberList = MEMBERS.map(m => {
+      const sel = !!s.newTagMembers[m.id];
+      return { id: m.id, name: m.name, initials: m.initials, color: m.color, sel, mark: sel ? '✓' : '', chkBg: sel ? '#22c55e' : 'transparent', chkBorder: sel ? '#22c55e' : '#3a3a3a', onToggle: () => this.toggleNewTagMember(m.id) };
+    });
+    const newTagCount = Object.keys(s.newTagMembers).filter(k => s.newTagMembers[k]).length;
+
+    const meta = META[s.activeMeme] || META.m2;
+    const mapComments = (mid) => (s.comments[mid] || []).map(c => {
+      const vote = c.vote || 0;
+      return {
+        id: c.id, author: c.author, initials: c.initials, color: c.color, text: c.text, time: c.time,
+        upCount: c.up || 0, downCount: c.down || 0,
+        upColor: vote === 1 ? BLUE : MUT, downColor: vote === -1 ? RED : MUT,
+        upFill: vote === 1 ? BLUE : 'none', downFill: vote === -1 ? RED : 'none',
+        onUp: () => this.voteComment(mid, c.id, 1),
+        onDown: () => this.voteComment(mid, c.id, -1),
+      };
+    });
+    const uComments = mapComments(s.activeMeme);
+
+    return {
+      spaceName: this.props.spaceName != null ? this.props.spaceName : 'Banner of Memes',
+      notifDot: this.props.notifDot != null ? this.props.notifDot : true,
+      uShowComments: s.userScreen === 'comments',
+      uNotComments: s.userScreen !== 'comments',
+      uShowFeed: s.userTab === 'feed' && s.userScreen === 'feed',
+      uShowTags: s.userTab === 'tags',
+      uShowProfile: s.userTab === 'profile',
+      feedDots: [0, 1, 2].map(i => ({ fill: i === s.feedPage ? '#ffffff' : 'rgba(255,255,255,0.28)', page: i })),
+      onFeedScroll: (e) => this.onFeedScroll(e),
+      tabFeed: s.userTab === 'feed' ? BLUE : '#5c5c5c',
+      tabTags: s.userTab === 'tags' ? BLUE : '#5c5c5c',
+      tabProfile: s.userTab === 'profile' ? BLUE : '#5c5c5c',
+      rx,
+      uComments,
+      activeCaption: meta.caption,
+      activeStat: meta.stat,
+      m2Count: (s.comments.m2 || []).length,
+      composer: s.composer,
+      back: () => this.back(),
+      onFeed: () => this.setTab('feed'),
+      onTags: () => this.setTab('tags'),
+      onProfile: () => this.setTab('profile'),
+      setComposer: (e) => this.setComposer(e),
+      sendComment: () => this.sendComment(),
+
+      uploadTagsList,
+      creatingTag: s.creatingTag,
+      newTagName: s.newTagName,
+      newTagMemberList,
+      newTagCount,
+      newTagCountLabel: newTagCount === 0 ? 'No members yet' : (newTagCount === 1 ? '1 member assigned' : newTagCount + ' members assigned'),
+      canCreateTag: (s.newTagName || '').trim().length > 0,
+      createBtnBg: (s.newTagName || '').trim().length > 0 ? '#22c55e' : '#1c2a1f',
+      createBtnColor: (s.newTagName || '').trim().length > 0 ? '#04210f' : '#5a6b5e',
+      startNewTag: () => this.startNewTag(),
+      cancelNewTag: () => this.cancelNewTag(),
+      setNewTagName: (e) => this.setNewTagName(e),
+      createTag: () => this.createTag(),
+      audAvatars: matched.slice(0, 5).map(m => ({ initials: m.initials, color: m.color })),
+      audCount: matched.length + 1,
+      audTotal: MEMBERS.length + 1,
+      audNames: (matched.map(m => m.name).concat(['you']).slice(0, 4).join(', ')) + (matched.length > 3 ? ' …' : ''),
+      upLabels: upSel.map(k => '#' + k).join(' ') || 'no tags yet',
+      published: s.published,
+      pubBtnLabel: s.published ? 'Update post' : 'Send to space',
+      draftColor: s.published ? '#8a8a8a' : '#fafafa',
+      draftBg: s.published ? 'transparent' : '#2a2a2a',
+      pubColor: s.published ? '#fafafa' : '#8a8a8a',
+      pubBg: s.published ? 'rgba(34,197,94,.18)' : 'transparent',
+      pubStatusColor: s.published ? '#22c55e' : '#eab308',
+      pubStatusLabel: s.published ? 'Published · live to space' : 'Draft · only you can see this',
+      onDraft: () => this.setPublished(false),
+      onPublish: () => this.setPublished(true),
+      sendPost: () => this.setPublished(true),
+      tagStats,
+      membersList,
+      m2Comments: mapComments('m2'),
+      composer2: s.composer2,
+      setComposer2: (e) => this.setComposer2(e),
+      sendM2: () => this.sendM2(),
+    };
+  }
+}
+</script>
+</body>
+</html>
