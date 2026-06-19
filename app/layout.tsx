@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Anton } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { RoleToggle } from "@/components/RoleToggle";
 import { StoreProvider } from "@/lib/data/store";
 
 const geistSans = Geist({
@@ -52,7 +53,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-app text-ink">
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          {children}
+          <RoleToggle />
+        </StoreProvider>
         <ServiceWorkerRegister />
       </body>
     </html>
