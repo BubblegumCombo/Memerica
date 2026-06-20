@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/data/store";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /**
  * Seed-phase dev control: flip the viewer between member and admin and jump to
@@ -11,6 +12,8 @@ import { useStore } from "@/lib/data/store";
 export function RoleToggle() {
   const { you, setRole } = useStore();
   const router = useRouter();
+  // Dev-only affordance; hidden once real Supabase auth + roles are live.
+  if (isSupabaseConfigured()) return null;
   const isAdmin = you.role === "admin";
 
   function toggle() {
