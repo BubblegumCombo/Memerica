@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 /** Admin screen header: MEMERICA + Admin badge, a screen title, and the stripe. */
 export function AdminTopBar({ title }: { title: string }) {
   return (
@@ -14,6 +16,12 @@ export function AdminTopBar({ title }: { title: string }) {
             Admin
           </span>
         </div>
+        <Link
+          href="/feed"
+          className="ml-auto rounded-full border border-line-strong px-3 py-1.5 text-xs font-semibold text-muted"
+        >
+          Feed
+        </Link>
       </div>
       <div className="pt-1.5 pb-3 text-2xl font-bold tracking-[-0.5px]">{title}</div>
       <div className="-mx-4 flex h-[3px]">

@@ -11,7 +11,23 @@ export async function GET(request: Request) {
   if (code && isSupabaseConfigured()) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    if (!error) {
+      let dest = next;
+      if (next === "/feed") {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const { data: membership } = await supabase
+            .from("space_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (membership?.role === "admin") dest = "/upload";
+        }
+      }
+      return NextResponse.redirect(`${origin}${dest}`);
+    }
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth`);
