@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Reference design prototype exported from Claude Design — not app source.
     "design-handoff/**",
+    // Standalone Lambda package (its own runtime/deps) — not part of the app build.
+    "infra/**",
   ]),
 ]);
 
