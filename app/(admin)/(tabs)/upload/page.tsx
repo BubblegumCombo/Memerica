@@ -22,7 +22,7 @@ export default function UploadPage() {
   const { tags, members, createTag, publishPost } = useStore();
   const router = useRouter();
 
-  const [mode, setMode] = useState<"compose" | "upload">("compose");
+  const [mode, setMode] = useState<"compose" | "upload">("upload");
   const [compose, setCompose] = useState<MemeCompose>(DEFAULT_COMPOSE);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [caption, setCaption] = useState("");
@@ -89,11 +89,11 @@ export default function UploadPage() {
 
         {/* compose vs upload */}
         <div className="flex gap-1 rounded-[11px] border border-line bg-input p-1">
-          <Segment active={mode === "compose"} onClick={() => setMode("compose")}>
-            Compose
-          </Segment>
           <Segment active={mode === "upload"} onClick={() => setMode("upload")}>
             Upload image
+          </Segment>
+          <Segment active={mode === "compose"} onClick={() => setMode("compose")}>
+            Compose
           </Segment>
         </div>
 
