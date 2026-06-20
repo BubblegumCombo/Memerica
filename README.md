@@ -44,3 +44,15 @@ The schema lives in `supabase/migrations/`. To stand up a backend on a **new, de
 6. Regenerate types: `supabase gen types typescript --project-id <id> > lib/database.types.ts`.
 
 Auth (login, callback, sign-out), session middleware, and RLS are already wired and guard themselves when env is absent. The remaining live step is swapping `lib/data/store.tsx` from the seed source to Supabase queries behind the same interface.
+
+## Image uploads (AWS S3 — Phase 4)
+
+Uploaded and composed memes are stored in your **own** S3 bucket and served via CloudFront. The client never streams bytes through the app server — it requests a presigned URL (`/api/uploads/presign`) and PUTs directly to S3. Uploads stay disabled until AWS env is set.
+
+Setup (new, dedicated AWS account):
+
+1. Create a **private** S3 bucket (e.g. `memerica-uploads`) with a CloudFront distribution in front of it using Origin Access Control (OAC). Put the distribution domain in `NEXT_PUBLIC_CDN_URL`.
+2. Create a least-privilege IAM user for the presign route with `s3:PutObject` on `arn:aws:s3:::memerica-uploads/uploads/*`; put its keys + `AWS_REGION` + `S3_BUCKET` in `.env.local`.
+3. Deploy the image-processing Lambda in `infra/lambda/process-image/` and wire it to the bucket's `s3:ObjectCreated:*` event (see that folder's README) — it writes WebP derivatives and runs Rekognition moderation.
+
+Helpers in place: `lib/aws/*`, the presign route, `lib/upload.ts` (client direct-to-S3), and `lib/composeToPng.ts` (renders a composed meme to a PNG for upload). The remaining live step is calling these from the Upload screen and persisting the returned key on the post.
