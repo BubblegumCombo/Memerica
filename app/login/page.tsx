@@ -26,19 +26,7 @@ export default function LoginPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      let dest = "/feed";
-      if (user) {
-        const { data: membership } = await supabase
-          .from("space_members")
-          .select("role")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (membership?.role === "admin") dest = "/upload";
-      }
-      router.push(dest);
+      router.push("/feed");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-in failed.");
