@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/data/store";
 import { AdminTopBar } from "@/components/AdminTopBar";
 import { Avatar } from "@/components/Avatar";
@@ -8,14 +8,19 @@ import { LinkIcon, CheckIcon } from "@/components/icons";
 
 export default function MembersPage() {
   const { space, members, invitations, addInvitation } = useStore();
-  const inviteUrl = `memerica.app/join/${space.inviteCode}`;
+  const [origin, setOrigin] = useState("");
+  // Read the live origin after mount (client-only) so the copyable link points
+  // at the real domain without a hydration mismatch.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setOrigin(window.location.origin), []);
+  const inviteUrl = `${origin}/join/${space.inviteCode}`;
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState("");
   const pending = invitations.filter((i) => i.status === "pending");
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(`https://${inviteUrl}`);
+      await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -38,7 +43,7 @@ export default function MembersPage() {
           <p className="mb-[9px] text-[13px] font-semibold text-ink-2">Invite to {space.name}</p>
           <div className="flex gap-2">
             <div className="flex h-[42px] flex-1 items-center truncate rounded-[10px] border border-line-strong bg-input px-3 font-mono text-[13px] text-muted">
-              {inviteUrl}
+              {inviteUrl.replace(/^https?:\/\//, "")}
             </div>
             <button
               type="button"

@@ -265,7 +265,10 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const isPublic =
-    pathname === "/login" || pathname === "/onboarding" || (pathname?.startsWith("/auth") ?? false);
+    pathname === "/login" ||
+    pathname === "/onboarding" ||
+    (pathname?.startsWith("/auth") ?? false) ||
+    (pathname?.startsWith("/join") ?? false);
 
   useEffect(() => {
     let active = true;

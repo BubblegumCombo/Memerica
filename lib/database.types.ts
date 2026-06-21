@@ -440,6 +440,8 @@ export type Database = {
       can_see_post: { Args: { p_post: string }; Returns: boolean }
       is_space_admin: { Args: { target_space: string }; Returns: boolean }
       is_space_member: { Args: { target_space: string }; Returns: boolean }
+      join_space: { Args: { p_code: string }; Returns: string }
+      space_name_for_code: { Args: { p_code: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "member"
