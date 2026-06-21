@@ -17,6 +17,8 @@ import type {
 export interface NewPostInput {
   kind: "image" | "composed";
   imageUrl?: string;
+  /** S3 object key for an uploaded image (persisted to posts.image_path). */
+  imageKey?: string;
   compose?: MemeCompose;
   caption?: string;
   tagKeys: string[];

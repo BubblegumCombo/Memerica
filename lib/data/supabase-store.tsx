@@ -481,8 +481,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
         space_id: s.spaceId,
         author_id: s.uid,
         kind: input.kind,
-        // image uploads to S3 are wired in a later step; persist composed memes only for now
-        image_path: null,
+        image_path: input.kind === "image" ? input.imageKey ?? null : null,
         compose: (input.kind === "composed" ? input.compose ?? null : null) as Json,
         caption: input.caption?.trim() || null,
         status: input.status,
