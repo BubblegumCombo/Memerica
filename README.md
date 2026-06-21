@@ -56,3 +56,5 @@ Setup (new, dedicated AWS account):
 3. Deploy the image-processing Lambda in `infra/lambda/process-image/` and wire it to the bucket's `s3:ObjectCreated:*` event (see that folder's README) — it writes WebP derivatives and runs Rekognition moderation.
 
 Helpers in place: `lib/aws/*`, the presign route, `lib/upload.ts` (client direct-to-S3), and `lib/composeToPng.ts` (renders a composed meme to a PNG for upload). The remaining live step is calling these from the Upload screen and persisting the returned key on the post.
+
+:)
