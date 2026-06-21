@@ -31,3 +31,4 @@ npm run dev
 ```
 
 More detailed setup (environment variables for Supabase and AWS) is documented as those phases land.
+## :)
