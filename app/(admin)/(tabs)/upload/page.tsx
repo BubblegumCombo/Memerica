@@ -8,6 +8,7 @@ import { AdminTopBar } from "@/components/AdminTopBar";
 import { MemeComposer } from "@/components/MemeComposer";
 import { Avatar } from "@/components/Avatar";
 import { PlusIcon, CheckIcon } from "@/components/icons";
+import { uploadImage } from "@/lib/upload";
 
 const DEFAULT_COMPOSE: MemeCompose = {
   bg: "#243a2a",
@@ -29,6 +30,9 @@ export default function UploadPage() {
   const [selected, setSelected] = useState<string[]>(["based", "gaming"]);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [flash, setFlash] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -39,14 +43,17 @@ export default function UploadPage() {
     matchedMembers.map((m) => m.name).concat(["you"]).slice(0, 4).join(", ") +
     (matchedMembers.length > 3 ? " …" : "");
   const tagLabels = selected.map((k) => "#" + k).join(" ") || "no tags yet";
-  const canPublish = mode === "compose" ? Boolean(compose.top || compose.bottom) : Boolean(imageUrl);
+  const canPublish = mode === "compose" ? Boolean(compose.top || compose.bottom) : Boolean(file);
 
   function toggleTag(k: string) {
     setSelected((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
   }
   function pickImage(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setImageUrl(URL.createObjectURL(file));
+    const f = e.target.files?.[0];
+    if (f) {
+      setFile(f);
+      setImageUrl(URL.createObjectURL(f));
+    }
   }
   function toggleNewMember(id: string) {
     setNewMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
@@ -60,11 +67,31 @@ export default function UploadPage() {
     setNewName("");
     setNewMembers([]);
   }
-  function publish() {
-    if (!canPublish) return;
+  async function publish() {
+    if (!canPublish || uploading) return;
+    setError(null);
+
+    let imageKey: string | undefined;
+    let uploadedUrl: string | undefined;
+    if (mode === "upload") {
+      if (!file) return;
+      setUploading(true);
+      try {
+        const res = await uploadImage(file, file.type);
+        imageKey = res.key;
+        uploadedUrl = res.url;
+      } catch (e) {
+        setUploading(false);
+        setError(e instanceof Error ? e.message : "Image upload failed.");
+        return;
+      }
+      setUploading(false);
+    }
+
     publishPost({
       kind: mode === "upload" ? "image" : "composed",
-      imageUrl: mode === "upload" ? imageUrl : undefined,
+      imageKey,
+      imageUrl: mode === "upload" ? uploadedUrl : undefined,
       compose: mode === "compose" ? compose : undefined,
       caption,
       tagKeys: selected,
@@ -101,7 +128,14 @@ export default function UploadPage() {
           {mode === "compose" ? (
             <MemeComposer value={compose} onChange={setCompose} />
           ) : (
-            <ImagePicker imageUrl={imageUrl} onPick={pickImage} onClear={() => setImageUrl(undefined)} />
+            <ImagePicker
+              imageUrl={imageUrl}
+              onPick={pickImage}
+              onClear={() => {
+                setImageUrl(undefined);
+                setFile(null);
+              }}
+            />
           )}
         </div>
 
@@ -271,11 +305,12 @@ export default function UploadPage() {
           <button
             type="button"
             onClick={publish}
-            disabled={!canPublish}
+            disabled={!canPublish || uploading}
             className="mt-3.5 h-12 w-full rounded-[12px] bg-like text-[15px] font-bold text-white disabled:opacity-50"
           >
-            {status === "published" ? "Send to space" : "Save draft"}
+            {uploading ? "Uploading…" : status === "published" ? "Send to space" : "Save draft"}
           </button>
+          {error ? <p className="mt-2 text-xs font-semibold text-dislike">{error}</p> : null}
         </div>
         <div className="h-2" />
       </main>
