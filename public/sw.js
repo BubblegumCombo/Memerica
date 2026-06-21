@@ -27,6 +27,9 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
 
+  // Only handle same-origin requests — never intercept S3 / Supabase / fonts.
+  if (new URL(request.url).origin !== self.location.origin) return;
+
   // Network-first for navigations so content stays fresh; fall back to shell.
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match("/")));
