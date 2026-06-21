@@ -15,6 +15,9 @@ export function getS3Client(): S3Client {
     client = new S3Client({
       region: AWS_REGION,
       credentials: { accessKeyId: AWS_ACCESS_KEY_ID, secretAccessKey: AWS_SECRET_ACCESS_KEY },
+      // Skip default integrity checksums — they bloat presigned URLs with
+      // x-amz-checksum params that can trip up direct browser PUTs.
+      requestChecksumCalculation: "WHEN_REQUIRED",
     });
   }
   return client;
