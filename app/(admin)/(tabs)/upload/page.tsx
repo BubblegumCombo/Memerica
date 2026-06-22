@@ -7,16 +7,10 @@ import { useStore } from "@/lib/data/store";
 import { AdminTopBar } from "@/components/AdminTopBar";
 import { MemeComposer } from "@/components/MemeComposer";
 import { Avatar } from "@/components/Avatar";
-import { PlusIcon, CheckIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 import { uploadImage } from "@/lib/upload";
 
-const DEFAULT_COMPOSE: MemeCompose = {
-  bg: "#111111",
-  watermark: "",
-  top: "",
-  bottom: "",
-};
-
+const DEFAULT_COMPOSE: MemeCompose = { bg: "#111111", watermark: "", top: "", bottom: "" };
 const GREEN = "#22c55e";
 
 export default function UploadPage() {
@@ -25,9 +19,16 @@ export default function UploadPage() {
 
   const [mode, setMode] = useState<"compose" | "upload">("upload");
   const [compose, setCompose] = useState<MemeCompose>(DEFAULT_COMPOSE);
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+
+  // Compose mode: a single image with top/bottom captions.
+  const [composeFile, setComposeFile] = useState<File | null>(null);
+  const [composeUrl, setComposeUrl] = useState<string | undefined>(undefined);
+
+  // Upload mode: a queue of images, published one at a time with their own tags.
+  const [batch, setBatch] = useState<{ file: File; url: string }[]>([]);
+  const [batchIndex, setBatchIndex] = useState(0);
+
   const [selected, setSelected] = useState<string[]>(["based", "gaming"]);
-  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,26 +36,42 @@ export default function UploadPage() {
   const [newName, setNewName] = useState("");
   const [newMembers, setNewMembers] = useState<string[]>([]);
 
+  const current = batch[batchIndex];
+  const remaining = mode === "upload" ? Math.max(0, batch.length - batchIndex - 1) : 0;
+  const canPublish = mode === "compose" ? Boolean(composeFile) : Boolean(current);
+
   const matchedMembers = members.filter((m) => m.tagKeys.some((t) => selected.includes(t)));
   const audienceLine =
     matchedMembers.map((m) => m.name).concat(["you"]).slice(0, 4).join(", ") +
     (matchedMembers.length > 3 ? " …" : "");
   const tagLabels = selected.map((k) => "#" + k).join(" ") || "no tags yet";
-  const canPublish = Boolean(file);
 
   function toggleTag(k: string) {
     setSelected((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
   }
-  function pickImage(e: ChangeEvent<HTMLInputElement>) {
+  function pickComposeImage(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (f) {
-      setFile(f);
-      setImageUrl(URL.createObjectURL(f));
+      setComposeFile(f);
+      setComposeUrl(URL.createObjectURL(f));
     }
   }
-  function clearImage() {
-    setImageUrl(undefined);
-    setFile(null);
+  function clearComposeImage() {
+    if (composeUrl) URL.revokeObjectURL(composeUrl);
+    setComposeFile(null);
+    setComposeUrl(undefined);
+  }
+  function pickBatch(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) {
+      setBatch(files.map((file) => ({ file, url: URL.createObjectURL(file) })));
+      setBatchIndex(0);
+    }
+  }
+  function clearBatch() {
+    batch.forEach((b) => URL.revokeObjectURL(b.url));
+    setBatch([]);
+    setBatchIndex(0);
   }
   function toggleNewMember(id: string) {
     setNewMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
@@ -69,12 +86,13 @@ export default function UploadPage() {
     setNewMembers([]);
   }
   async function publish() {
-    if (!canPublish || uploading || !file) return;
+    const fileToUpload = mode === "compose" ? composeFile : current?.file;
+    if (!fileToUpload || uploading) return;
     setError(null);
     setUploading(true);
     let res;
     try {
-      res = await uploadImage(file, file.type);
+      res = await uploadImage(fileToUpload, fileToUpload.type);
     } catch (e) {
       setUploading(false);
       setError(e instanceof Error ? e.message : "Image upload failed.");
@@ -91,13 +109,15 @@ export default function UploadPage() {
             compose: { bg: "#111111", watermark: "", top: compose.top, bottom: compose.bottom },
             tagKeys: selected,
           }
-        : {
-            kind: "image",
-            imageKey: res.key,
-            imageUrl: res.url,
-            tagKeys: selected,
-          },
+        : { kind: "image", imageKey: res.key, imageUrl: res.url, tagKeys: selected },
     );
+
+    // Upload queue: advance to the next image (keeping the chosen tags) instead
+    // of leaving — only the last one in the batch sends you back to the feed.
+    if (mode === "upload" && batchIndex + 1 < batch.length) {
+      setBatchIndex(batchIndex + 1);
+      return;
+    }
     router.push("/feed");
   }
 
@@ -108,7 +128,7 @@ export default function UploadPage() {
         {/* compose vs upload */}
         <div className="flex gap-1 rounded-[11px] border border-line bg-input p-1">
           <Segment active={mode === "upload"} onClick={() => setMode("upload")}>
-            Upload image
+            Upload images
           </Segment>
           <Segment active={mode === "compose"} onClick={() => setMode("compose")}>
             Compose
@@ -118,16 +138,44 @@ export default function UploadPage() {
         <div className="mt-4">
           {mode === "compose" ? (
             <MemeComposer
-              imageUrl={imageUrl}
+              imageUrl={composeUrl}
               top={compose.top}
               bottom={compose.bottom}
-              onPick={pickImage}
-              onClear={clearImage}
+              onPick={pickComposeImage}
+              onClear={clearComposeImage}
               onTopChange={(v) => setCompose({ ...compose, top: v })}
               onBottomChange={(v) => setCompose({ ...compose, bottom: v })}
             />
+          ) : current ? (
+            <div className="relative overflow-hidden rounded-[14px] border border-line">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={current.url} alt="upload preview" className="max-h-[320px] w-full object-cover" />
+              <button
+                type="button"
+                onClick={clearBatch}
+                className="absolute top-2.5 right-2.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
+              >
+                Clear
+              </button>
+              {batch.length > 1 ? (
+                <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/50 px-2.5 py-[5px] font-mono text-[11px] text-ink-2 backdrop-blur">
+                  {batchIndex + 1} of {batch.length}
+                </div>
+              ) : null}
+            </div>
           ) : (
-            <ImagePicker imageUrl={imageUrl} onPick={pickImage} onClear={clearImage} />
+            <label className="flex h-[200px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-line-strong bg-input text-center">
+              <PlusIcon size={22} strokeWidth={2} />
+              <span className="text-sm font-semibold text-ink-2">Choose one or more images</span>
+              <span className="text-xs text-muted-2">Publish each with its own tags</span>
+              <input
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp"
+                onChange={pickBatch}
+                className="hidden"
+              />
+            </label>
           )}
         </div>
 
@@ -271,7 +319,7 @@ export default function UploadPage() {
             disabled={!canPublish || uploading}
             className="h-12 w-full rounded-[12px] bg-like text-[15px] font-bold text-white disabled:opacity-50"
           >
-            {uploading ? "Uploading…" : "Send to space"}
+            {uploading ? "Uploading…" : remaining > 0 ? `Publish & next (${remaining} left)` : "Send to space"}
           </button>
           {error ? <p className="mt-2 text-xs font-semibold text-dislike">{error}</p> : null}
         </div>
@@ -285,59 +333,19 @@ function Segment({
   children,
   active,
   onClick,
-  activeBg = "#2a2a2a",
 }: {
   children: ReactNode;
   active: boolean;
   onClick: () => void;
-  activeBg?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="h-9 flex-1 rounded-[8px] text-[13px] font-semibold"
-      style={{ background: active ? activeBg : "transparent", color: active ? "#fafafa" : "#8a8a8a" }}
+      style={{ background: active ? "#2a2a2a" : "transparent", color: active ? "#fafafa" : "#8a8a8a" }}
     >
       {children}
     </button>
-  );
-}
-
-function ImagePicker({
-  imageUrl,
-  onPick,
-  onClear,
-}: {
-  imageUrl?: string;
-  onPick: (e: ChangeEvent<HTMLInputElement>) => void;
-  onClear: () => void;
-}) {
-  if (imageUrl) {
-    return (
-      <div className="relative overflow-hidden rounded-[14px] border border-line">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="meme upload preview" className="max-h-[320px] w-full object-cover" />
-        <button
-          type="button"
-          onClick={onClear}
-          className="absolute top-2.5 right-2.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
-        >
-          Replace
-        </button>
-        <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-[5px] backdrop-blur">
-          <CheckIcon size={13} strokeWidth={2.4} style={{ color: GREEN }} />
-          <span className="font-mono text-[11px] text-ink-2">staged for upload</span>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <label className="flex h-[200px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-line-strong bg-input text-center">
-      <PlusIcon size={22} strokeWidth={2} />
-      <span className="text-sm font-semibold text-ink-2">Choose an image</span>
-      <span className="text-xs text-muted-2">PNG or JPG — stored on S3</span>
-      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onPick} className="hidden" />
-    </label>
   );
 }
