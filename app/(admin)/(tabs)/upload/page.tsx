@@ -11,10 +11,10 @@ import { PlusIcon, CheckIcon } from "@/components/icons";
 import { uploadImage } from "@/lib/upload";
 
 const DEFAULT_COMPOSE: MemeCompose = {
-  bg: "#243a2a",
-  watermark: "BASED",
-  top: "Took the trash out",
-  bottom: "Felt unreasonably based",
+  bg: "#111111",
+  watermark: "",
+  top: "",
+  bottom: "",
 };
 
 const GREEN = "#22c55e";
@@ -26,7 +26,6 @@ export default function UploadPage() {
   const [mode, setMode] = useState<"compose" | "upload">("upload");
   const [compose, setCompose] = useState<MemeCompose>(DEFAULT_COMPOSE);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
-  const [caption, setCaption] = useState("");
   const [selected, setSelected] = useState<string[]>(["based", "gaming"]);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,7 +40,7 @@ export default function UploadPage() {
     matchedMembers.map((m) => m.name).concat(["you"]).slice(0, 4).join(", ") +
     (matchedMembers.length > 3 ? " …" : "");
   const tagLabels = selected.map((k) => "#" + k).join(" ") || "no tags yet";
-  const canPublish = mode === "compose" ? Boolean(compose.top || compose.bottom) : Boolean(file);
+  const canPublish = Boolean(file);
 
   function toggleTag(k: string) {
     setSelected((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
@@ -52,6 +51,10 @@ export default function UploadPage() {
       setFile(f);
       setImageUrl(URL.createObjectURL(f));
     }
+  }
+  function clearImage() {
+    setImageUrl(undefined);
+    setFile(null);
   }
   function toggleNewMember(id: string) {
     setNewMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
@@ -66,34 +69,35 @@ export default function UploadPage() {
     setNewMembers([]);
   }
   async function publish() {
-    if (!canPublish || uploading) return;
+    if (!canPublish || uploading || !file) return;
     setError(null);
-
-    let imageKey: string | undefined;
-    let uploadedUrl: string | undefined;
-    if (mode === "upload") {
-      if (!file) return;
-      setUploading(true);
-      try {
-        const res = await uploadImage(file, file.type);
-        imageKey = res.key;
-        uploadedUrl = res.url;
-      } catch (e) {
-        setUploading(false);
-        setError(e instanceof Error ? e.message : "Image upload failed.");
-        return;
-      }
+    setUploading(true);
+    let res;
+    try {
+      res = await uploadImage(file, file.type);
+    } catch (e) {
       setUploading(false);
+      setError(e instanceof Error ? e.message : "Image upload failed.");
+      return;
     }
+    setUploading(false);
 
-    publishPost({
-      kind: mode === "upload" ? "image" : "composed",
-      imageKey,
-      imageUrl: mode === "upload" ? uploadedUrl : undefined,
-      compose: mode === "compose" ? compose : undefined,
-      caption,
-      tagKeys: selected,
-    });
+    publishPost(
+      mode === "compose"
+        ? {
+            kind: "composed",
+            imageKey: res.key,
+            imageUrl: res.url,
+            compose: { bg: "#111111", watermark: "", top: compose.top, bottom: compose.bottom },
+            tagKeys: selected,
+          }
+        : {
+            kind: "image",
+            imageKey: res.key,
+            imageUrl: res.url,
+            tagKeys: selected,
+          },
+    );
     router.push("/feed");
   }
 
@@ -113,28 +117,18 @@ export default function UploadPage() {
 
         <div className="mt-4">
           {mode === "compose" ? (
-            <MemeComposer value={compose} onChange={setCompose} />
-          ) : (
-            <ImagePicker
+            <MemeComposer
               imageUrl={imageUrl}
+              top={compose.top}
+              bottom={compose.bottom}
               onPick={pickImage}
-              onClear={() => {
-                setImageUrl(undefined);
-                setFile(null);
-              }}
+              onClear={clearImage}
+              onTopChange={(v) => setCompose({ ...compose, top: v })}
+              onBottomChange={(v) => setCompose({ ...compose, bottom: v })}
             />
+          ) : (
+            <ImagePicker imageUrl={imageUrl} onPick={pickImage} onClear={clearImage} />
           )}
-        </div>
-
-        {/* caption */}
-        <div className="mt-[18px]">
-          <p className="mb-[7px] text-[13px] font-semibold text-ink-2">Caption</p>
-          <input
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            placeholder="Optional — add a line"
-            className="h-[42px] w-full rounded-[10px] border border-line-strong bg-input px-3.5 text-sm text-ink outline-none placeholder:text-muted-2"
-          />
         </div>
 
         {/* tags */}
@@ -342,8 +336,8 @@ function ImagePicker({
     <label className="flex h-[200px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-line-strong bg-input text-center">
       <PlusIcon size={22} strokeWidth={2} />
       <span className="text-sm font-semibold text-ink-2">Choose an image</span>
-      <span className="text-xs text-muted-2">PNG or JPG — uploaded to S3 in Phase 4</span>
-      <input type="file" accept="image/*" onChange={onPick} className="hidden" />
+      <span className="text-xs text-muted-2">PNG or JPG — stored on S3</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onPick} className="hidden" />
     </label>
   );
 }

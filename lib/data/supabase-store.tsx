@@ -539,7 +539,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     const post: Post = {
       id,
       kind: input.kind,
-      imageUrl: input.kind === "image" ? input.imageUrl : undefined,
+      imageUrl: input.imageUrl,
       compose: input.kind === "composed" ? input.compose : undefined,
       caption: input.caption?.trim() || undefined,
       tagKeys: input.tagKeys,
@@ -559,7 +559,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
         space_id: s.spaceId,
         author_id: s.uid,
         kind: input.kind,
-        image_path: input.kind === "image" ? input.imageKey ?? null : null,
+        image_path: input.imageKey ?? null,
         compose: (input.kind === "composed" ? input.compose ?? null : null) as Json,
         caption: input.caption?.trim() || null,
         status: "published",
