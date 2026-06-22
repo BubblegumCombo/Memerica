@@ -196,6 +196,7 @@ async function loadAll(supabase: Client, uid: string): Promise<LoadedState> {
       const comment: Comment = {
         id: c.id,
         postId: c.post_id,
+        parentId: c.parent_id,
         author: author?.name ?? "Member",
         initials: author?.initials ?? "??",
         color: author?.color ?? "#3b82f6",
@@ -329,7 +330,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     })().catch((e) => console.error("vote failed", e));
   };
 
-  const addComment = (postId: string, text: string) => {
+  const addComment = (postId: string, text: string, parentId?: string | null) => {
     const s = stateRef.current;
     const body = text.trim();
     if (!s || !body) return;
@@ -337,6 +338,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     const comment: Comment = {
       id: tempId,
       postId,
+      parentId: parentId ?? null,
       author: s.you.name,
       initials: s.you.initials,
       color: s.you.color,
@@ -352,7 +354,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     }));
     void supabase
       .from("comments")
-      .insert({ post_id: postId, author_id: s.uid, body })
+      .insert({ post_id: postId, author_id: s.uid, body, parent_id: parentId ?? null })
       .select("id")
       .single()
       .then(({ data }) => {
