@@ -22,7 +22,6 @@ export interface NewPostInput {
   compose?: MemeCompose;
   caption?: string;
   tagKeys: string[];
-  status: "draft" | "published";
 }
 
 /**

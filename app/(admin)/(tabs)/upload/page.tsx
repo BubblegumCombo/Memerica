@@ -28,8 +28,6 @@ export default function UploadPage() {
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [caption, setCaption] = useState("");
   const [selected, setSelected] = useState<string[]>(["based", "gaming"]);
-  const [status, setStatus] = useState<"draft" | "published">("draft");
-  const [flash, setFlash] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,25 +93,14 @@ export default function UploadPage() {
       compose: mode === "compose" ? compose : undefined,
       caption,
       tagKeys: selected,
-      status,
     });
-    if (status === "published") {
-      router.push("/feed");
-    } else {
-      setFlash("Saved as draft — only you can see it");
-    }
+    router.push("/feed");
   }
 
   return (
     <>
       <AdminTopBar title="New Post" />
       <main className="no-scrollbar flex-1 overflow-y-auto p-4">
-        {flash ? (
-          <div className="mb-3 rounded-[10px] border border-success/40 bg-success/10 px-3 py-2 text-xs font-semibold text-success">
-            {flash}
-          </div>
-        ) : null}
-
         {/* compose vs upload */}
         <div className="flex gap-1 rounded-[11px] border border-line bg-input p-1">
           <Segment active={mode === "upload"} onClick={() => setMode("upload")}>
@@ -284,31 +271,13 @@ export default function UploadPage() {
 
         {/* publish */}
         <div className="mt-[18px]">
-          <div className="flex gap-1 rounded-[11px] border border-line bg-input p-1">
-            <Segment active={status === "draft"} onClick={() => setStatus("draft")}>
-              Draft
-            </Segment>
-            <Segment
-              active={status === "published"}
-              onClick={() => setStatus("published")}
-              activeBg="rgba(34,197,94,.18)"
-            >
-              Published
-            </Segment>
-          </div>
-          <p
-            className="mt-2.5 text-xs font-semibold"
-            style={{ color: status === "published" ? GREEN : "#eab308" }}
-          >
-            {status === "published" ? "Published · live to space" : "Draft · only you can see this"}
-          </p>
           <button
             type="button"
             onClick={publish}
             disabled={!canPublish || uploading}
-            className="mt-3.5 h-12 w-full rounded-[12px] bg-like text-[15px] font-bold text-white disabled:opacity-50"
+            className="h-12 w-full rounded-[12px] bg-like text-[15px] font-bold text-white disabled:opacity-50"
           >
-            {uploading ? "Uploading…" : status === "published" ? "Send to space" : "Save draft"}
+            {uploading ? "Uploading…" : "Send to space"}
           </button>
           {error ? <p className="mt-2 text-xs font-semibold text-dislike">{error}</p> : null}
         </div>

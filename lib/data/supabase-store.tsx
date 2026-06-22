@@ -535,7 +535,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     const s = stateRef.current;
     if (!s) return "";
     const id = crypto.randomUUID();
-    const published = input.status === "published";
+    const now = new Date().toISOString();
     const post: Post = {
       id,
       kind: input.kind,
@@ -543,18 +543,16 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
       compose: input.kind === "composed" ? input.compose : undefined,
       caption: input.caption?.trim() || undefined,
       tagKeys: input.tagKeys,
-      status: input.status,
+      status: "published",
       likeCount: 0,
       dislikeCount: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     };
-    if (published) {
-      patch((st) => ({
-        ...st,
-        posts: [post, ...st.posts],
-        tags: st.tags.map((t) => (input.tagKeys.includes(t.key) ? { ...t, posts: t.posts + 1 } : t)),
-      }));
-    }
+    patch((st) => ({
+      ...st,
+      posts: [post, ...st.posts],
+      tags: st.tags.map((t) => (input.tagKeys.includes(t.key) ? { ...t, posts: t.posts + 1 } : t)),
+    }));
     void (async () => {
       await supabase.from("posts").insert({
         id,
@@ -564,8 +562,8 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
         image_path: input.kind === "image" ? input.imageKey ?? null : null,
         compose: (input.kind === "composed" ? input.compose ?? null : null) as Json,
         caption: input.caption?.trim() || null,
-        status: input.status,
-        published_at: published ? new Date().toISOString() : null,
+        status: "published",
+        published_at: now,
       });
       const tagIds = input.tagKeys.map((k) => s.tagIdByKey[k]).filter((x): x is string => Boolean(x));
       if (tagIds.length) {

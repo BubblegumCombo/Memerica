@@ -160,17 +160,15 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
       compose: input.compose,
       caption: input.caption?.trim() || undefined,
       tagKeys: input.tagKeys,
-      status: input.status,
+      status: "published",
       likeCount: 0,
       dislikeCount: 0,
       createdAt: new Date().toISOString(),
     };
     setPosts((prev) => [post, ...prev]);
-    if (input.status === "published") {
-      setTags((prev) =>
-        prev.map((t) => (input.tagKeys.includes(t.key) ? { ...t, posts: t.posts + 1 } : t)),
-      );
-    }
+    setTags((prev) =>
+      prev.map((t) => (input.tagKeys.includes(t.key) ? { ...t, posts: t.posts + 1 } : t)),
+    );
     return id;
   }, []);
 
