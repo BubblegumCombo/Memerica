@@ -42,7 +42,7 @@ export default function ProfilePage() {
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
                 style={{
                   background: on ? "rgba(59,130,246,0.16)" : "#161616",
-                  color: on ? "#7eb0ff" : "#7a7a7a",
+                  color: on ? "#7eb0ff" : "#9a9a9a",
                   border: `1px solid ${on ? "rgba(59,130,246,0.5)" : "#2a2a2a"}`,
                 }}
               >
@@ -58,7 +58,7 @@ export default function ProfilePage() {
         {assignedByAdmin.length > 0 ? (
           <>
             <p className="mt-4 text-xs font-bold uppercase tracking-[0.08em] text-muted-2">
-              Assigned by admin
+              Locked by admin
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {assignedByAdmin.map((t) => (

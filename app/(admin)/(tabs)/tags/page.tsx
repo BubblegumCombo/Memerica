@@ -32,7 +32,7 @@ export default function TagsPage() {
                   className="flex-none rounded-full px-2.5 py-1 text-[11px] font-semibold"
                   style={{
                     background: t.adminOnly ? "rgba(178,34,52,0.16)" : "#161616",
-                    color: t.adminOnly ? "#f1a3ad" : "#7a7a7a",
+                    color: t.adminOnly ? "#f1a3ad" : "#9a9a9a",
                     border: `1px solid ${t.adminOnly ? "rgba(178,34,52,0.5)" : "#2a2a2a"}`,
                   }}
                 >
@@ -65,7 +65,7 @@ export default function TagsPage() {
                       className="rounded-full px-2.5 py-1 text-xs font-semibold"
                       style={{
                         background: on ? "rgba(59,130,246,0.16)" : "#161616",
-                        color: on ? "#7eb0ff" : "#7a7a7a",
+                        color: on ? "#7eb0ff" : "#9a9a9a",
                         border: `1px solid ${on ? "rgba(59,130,246,0.5)" : "#2a2a2a"}`,
                       }}
                     >

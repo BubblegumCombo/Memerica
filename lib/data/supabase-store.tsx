@@ -263,6 +263,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<"loading" | "ready" | "signedout">("loading");
 
   const stateRef = useRef<LoadedState | null>(null);
+  const reloadGenRef = useRef(0);
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -470,7 +471,8 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
   };
 
   // Member self-assigns/removes a non-admin-only tag, then reloads so the feed
-  // (which the DB filters by tag visibility) reflects the change.
+  // (which the DB filters by tag visibility) reflects the change. A generation
+  // guard drops stale reloads from rapid toggles; on failure we roll back.
   const toggleMyTag = (tagKey: string) => {
     const s = stateRef.current;
     if (!s) return;
@@ -478,23 +480,22 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     if (!tag || tag.adminOnly) return;
     const tagId = s.tagIdByKey[tagKey];
     const had = s.you.tagKeys.includes(tagKey);
-    patch((st) => ({
-      ...st,
-      you: {
-        ...st.you,
-        tagKeys: had ? st.you.tagKeys.filter((t) => t !== tagKey) : [...st.you.tagKeys, tagKey],
-      },
-    }));
+    const before = s.you.tagKeys;
+    const setMine = (keys: string[]) => patch((st) => ({ ...st, you: { ...st.you, tagKeys: keys } }));
+    setMine(had ? before.filter((t) => t !== tagKey) : [...before, tagKey]);
     if (!tagId) return;
+    const gen = ++reloadGenRef.current;
     void (async () => {
-      if (had) {
-        await supabase.from("member_tags").delete().eq("user_id", s.uid).eq("tag_id", tagId);
-      } else {
-        await supabase.from("member_tags").upsert({ space_id: s.spaceId, user_id: s.uid, tag_id: tagId });
-      }
+      const res = had
+        ? await supabase.from("member_tags").delete().eq("user_id", s.uid).eq("tag_id", tagId)
+        : await supabase.from("member_tags").upsert({ space_id: s.spaceId, user_id: s.uid, tag_id: tagId });
+      if (res.error) throw res.error;
       const loaded = await loadAll(supabase, s.uid);
-      setState(loaded);
-    })().catch((e) => console.error("toggleMyTag failed", e));
+      if (gen === reloadGenRef.current) setState(loaded); // ignore a stale reload
+    })().catch((e) => {
+      console.error("toggleMyTag failed", e);
+      if (gen === reloadGenRef.current) setMine(before); // revert the optimistic change
+    });
   };
 
   const setTagAdminOnly = (tagKey: string, adminOnly: boolean) => {
