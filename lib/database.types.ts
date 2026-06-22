@@ -228,6 +228,7 @@ export type Database = {
           created_at: string
           dislike_count: number
           id: string
+          image_hash: string | null
           image_path: string | null
           kind: Database["public"]["Enums"]["post_kind"]
           like_count: number
@@ -243,6 +244,7 @@ export type Database = {
           created_at?: string
           dislike_count?: number
           id?: string
+          image_hash?: string | null
           image_path?: string | null
           kind: Database["public"]["Enums"]["post_kind"]
           like_count?: number
@@ -258,6 +260,7 @@ export type Database = {
           created_at?: string
           dislike_count?: number
           id?: string
+          image_hash?: string | null
           image_path?: string | null
           kind?: Database["public"]["Enums"]["post_kind"]
           like_count?: number

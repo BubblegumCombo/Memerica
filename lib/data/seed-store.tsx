@@ -157,6 +157,7 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
       id,
       kind: input.kind,
       imageUrl: input.imageUrl,
+      imageHash: input.imageHash,
       compose: input.compose,
       caption: input.caption?.trim() || undefined,
       tagKeys: input.tagKeys,

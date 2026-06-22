@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { MemeCompose } from "@/lib/types";
 import { useStore } from "@/lib/data/store";
@@ -13,8 +13,17 @@ import { uploadImage } from "@/lib/upload";
 const DEFAULT_COMPOSE: MemeCompose = { bg: "#111111", watermark: "", top: "", bottom: "" };
 const GREEN = "#22c55e";
 
+/** SHA-256 hex of a file's bytes — used to detect a re-upload of the same image. */
+async function hashFile(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export default function UploadPage() {
-  const { tags, members, createTag, publishPost } = useStore();
+  const { tags, members, posts, createTag, publishPost } = useStore();
   const router = useRouter();
 
   const [mode, setMode] = useState<"compose" | "upload">("upload");
@@ -31,6 +40,7 @@ export default function UploadPage() {
   const [selected, setSelected] = useState<string[]>(["based", "gaming"]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hashInfo, setHashInfo] = useState<{ file: File; hash: string } | null>(null);
 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -39,6 +49,23 @@ export default function UploadPage() {
   const current = batch[batchIndex];
   const remaining = mode === "upload" ? Math.max(0, batch.length - batchIndex - 1) : 0;
   const canPublish = mode === "compose" ? Boolean(composeFile) : Boolean(current);
+
+  const activeFile = mode === "compose" ? composeFile : current?.file;
+  // Only trust the hash once it belongs to the file currently shown.
+  const activeHash = hashInfo && hashInfo.file === activeFile ? hashInfo.hash : null;
+  const dupWarning = activeHash !== null && posts.some((p) => p.imageHash === activeHash);
+
+  // Hash the active image so we can flag a re-upload of the same picture.
+  useEffect(() => {
+    if (!activeFile) return;
+    let cancelled = false;
+    hashFile(activeFile).then((hash) => {
+      if (!cancelled) setHashInfo({ file: activeFile, hash });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFile]);
 
   const matchedMembers = members.filter((m) => m.tagKeys.some((t) => selected.includes(t)));
   const audienceLine =
@@ -106,10 +133,17 @@ export default function UploadPage() {
             kind: "composed",
             imageKey: res.key,
             imageUrl: res.url,
+            imageHash: activeHash ?? undefined,
             compose: { bg: "#111111", watermark: "", top: compose.top, bottom: compose.bottom },
             tagKeys: selected,
           }
-        : { kind: "image", imageKey: res.key, imageUrl: res.url, tagKeys: selected },
+        : {
+            kind: "image",
+            imageKey: res.key,
+            imageUrl: res.url,
+            imageHash: activeHash ?? undefined,
+            tagKeys: selected,
+          },
     );
 
     // Upload queue: advance to the next image (keeping the chosen tags) instead
@@ -310,6 +344,12 @@ export default function UploadPage() {
             {audienceLine} will see posts tagged {tagLabels}.
           </p>
         </div>
+
+        {dupWarning ? (
+          <div className="mt-[18px] rounded-[10px] border border-draft/40 bg-draft/10 px-3 py-2 text-xs font-semibold text-draft">
+            Heads up — this image looks like one that’s already been posted. You can publish it anyway.
+          </div>
+        ) : null}
 
         {/* publish */}
         <div className="mt-[18px]">

@@ -49,6 +49,8 @@ export interface Post {
   /** "image" = uploaded image in S3; "composed" = in-app text-on-color meme. */
   kind: "image" | "composed";
   imageUrl?: string;
+  /** SHA-256 hex of the image bytes, used to flag duplicate uploads. */
+  imageHash?: string;
   compose?: MemeCompose;
   /** Optional extra caption line shown with the post. */
   caption?: string;

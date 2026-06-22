@@ -43,6 +43,7 @@ export function mapPost(p: Tables["posts"]["Row"], tagKeys: string[]): Post {
     id: p.id,
     kind: p.kind,
     imageUrl: p.image_path ? cdnUrl(p.image_path) : undefined,
+    imageHash: p.image_hash ?? undefined,
     compose: (p.compose as unknown as Post["compose"]) ?? undefined,
     caption: p.caption ?? undefined,
     tagKeys,
