@@ -51,6 +51,10 @@ export interface Store {
   setRole: (role: Role) => void;
   createTag: (name: string, memberIds: string[]) => string;
   toggleMemberTag: (memberId: string, tagKey: string) => void;
+  /** Admin marks a tag admin-only (members can no longer self-assign it). */
+  setTagAdminOnly: (tagKey: string, adminOnly: boolean) => void;
+  /** Member adds/removes a non-admin-only tag from their own feed. */
+  toggleMyTag: (tagKey: string) => void;
   publishPost: (input: NewPostInput) => string;
   addInvitation: (email: string, name?: string) => void;
 }

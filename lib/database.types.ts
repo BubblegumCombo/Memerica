@@ -409,6 +409,7 @@ export type Database = {
       }
       tags: {
         Row: {
+          admin_only: boolean
           created_at: string
           dot: string
           id: string
@@ -417,6 +418,7 @@ export type Database = {
           space_id: string
         }
         Insert: {
+          admin_only?: boolean
           created_at?: string
           dot?: string
           id?: string
@@ -425,6 +427,7 @@ export type Database = {
           space_id: string
         }
         Update: {
+          admin_only?: boolean
           created_at?: string
           dot?: string
           id?: string

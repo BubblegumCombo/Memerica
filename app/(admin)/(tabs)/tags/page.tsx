@@ -5,23 +5,39 @@ import { AdminTopBar } from "@/components/AdminTopBar";
 import { Avatar } from "@/components/Avatar";
 
 export default function TagsPage() {
-  const { tags, members, toggleMemberTag } = useStore();
+  const { tags, members, toggleMemberTag, setTagAdminOnly } = useStore();
 
   return (
     <>
       <AdminTopBar title="Tags" />
       <main className="no-scrollbar flex-1 overflow-y-auto p-4">
         <p className="mb-[9px] text-xs font-bold uppercase tracking-[0.08em] text-muted-2">All Tags</p>
+        <p className="mb-3 text-xs text-muted-2">
+          Tap “Admin only” to stop members from adding a tag to their own feed.
+        </p>
         <div className="flex flex-col gap-1.5">
           {tags.map((t) => {
             const memberCount = members.filter((m) => m.tagKeys.includes(t.key)).length + 1;
             return (
               <div key={t.key} className="flex items-center gap-3 rounded-[12px] border border-line bg-card px-3.5 py-3">
                 <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: t.dot }} />
-                <span className="flex-1 text-sm font-semibold">#{t.key}</span>
-                <span className="text-xs tabular-nums text-muted">
-                  {memberCount} members · {t.posts} posts
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold">#{t.key}</span>
+                <span className="flex-none text-xs tabular-nums text-muted">
+                  {memberCount} · {t.posts}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setTagAdminOnly(t.key, !t.adminOnly)}
+                  aria-pressed={t.adminOnly}
+                  className="flex-none rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                  style={{
+                    background: t.adminOnly ? "rgba(178,34,52,0.16)" : "#161616",
+                    color: t.adminOnly ? "#f1a3ad" : "#9a9a9a",
+                    border: `1px solid ${t.adminOnly ? "rgba(178,34,52,0.5)" : "#2a2a2a"}`,
+                  }}
+                >
+                  Admin only
+                </button>
               </div>
             );
           })}
@@ -49,7 +65,7 @@ export default function TagsPage() {
                       className="rounded-full px-2.5 py-1 text-xs font-semibold"
                       style={{
                         background: on ? "rgba(59,130,246,0.16)" : "#161616",
-                        color: on ? "#7eb0ff" : "#7a7a7a",
+                        color: on ? "#7eb0ff" : "#9a9a9a",
                         border: `1px solid ${on ? "rgba(59,130,246,0.5)" : "#2a2a2a"}`,
                       }}
                     >
