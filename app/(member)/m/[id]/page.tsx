@@ -27,6 +27,12 @@ export default function CommentsPage() {
     if (c.parentId) (acc[c.parentId] ??= []).push(c);
     return acc;
   }, {});
+  const topLevelIds = new Set(topLevel.map((c) => c.id));
+  // Replies whose parent isn't a loaded top-level comment (deletes, partial
+  // loads, an unreconciled optimistic parent) — surface them so nothing is dropped.
+  const orphanReplies = Object.entries(repliesByParent)
+    .filter(([pid]) => !topLevelIds.has(pid))
+    .flatMap(([, rs]) => rs);
 
   if (!post) {
     return (
@@ -51,9 +57,11 @@ export default function CommentsPage() {
     setReplyTo(null);
   }
 
-  // Replies are one level deep: replying to a reply attaches to its top-level parent.
+  // Replies are one level deep: replying to a reply attaches to its top-level
+  // parent, so we seed an @mention to keep that addressee visible.
   function startReply(c: Comment) {
     setReplyTo({ id: c.parentId ?? c.id, author: c.author });
+    if (c.parentId) setDraft((d) => (d.trim() ? d : `@${c.author} `));
   }
 
   return (
@@ -102,6 +110,15 @@ export default function CommentsPage() {
           </Fragment>
         ))}
 
+        {orphanReplies.map((r) => (
+          <CommentItem
+            key={r.id}
+            comment={r}
+            onVote={(dir) => voteComment(id, r.id, dir)}
+            onReply={() => startReply(r)}
+          />
+        ))}
+
         {comments.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-2">No comments yet — say something.</p>
         ) : (
@@ -134,7 +151,7 @@ export default function CommentsPage() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") send();
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) send();
             }}
             placeholder={replyTo ? `Reply to ${replyTo.author}…` : "Add a comment…"}
             className="h-10 flex-1 rounded-[20px] border border-line-strong bg-input-2 px-4 text-sm text-ink outline-none placeholder:text-muted-2"
@@ -181,6 +198,9 @@ function CommentItem({
   onVote: (dir: 1 | -1) => void;
   onReply: () => void;
 }) {
+  // Don't allow replying until the (resolved) parent has a real persisted id.
+  const replyParentId = comment.parentId ?? comment.id;
+  const canReply = !replyParentId.startsWith("tmp-");
   return (
     <div className={`flex gap-[11px] py-3.5 pr-4 ${isReply ? "pl-14" : "pl-4"}`}>
       <Avatar initials={comment.initials} color={comment.color} size={isReply ? 28 : 34} />
@@ -209,7 +229,12 @@ function CommentItem({
             <ThumbDown size={15} strokeWidth={2} fill={comment.vote === -1 ? DISLIKE : "none"} />
             <span className="tabular-nums">{comment.down}</span>
           </button>
-          <button onClick={onReply} className="px-1.5 py-[3px] text-xs font-semibold text-muted-2">
+          <button
+            onClick={onReply}
+            disabled={!canReply}
+            aria-label={`Reply to ${comment.author}`}
+            className="px-1.5 py-[3px] text-xs font-semibold text-muted-2 disabled:opacity-40"
+          >
             Reply
           </button>
         </div>
