@@ -171,7 +171,7 @@ export default function CommentsPage() {
 }
 
 function MemeThumb({ post }: { post: Post }) {
-  if (post.kind === "image" && post.imageUrl) {
+  if (post.imageUrl) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={post.imageUrl} alt="" className="h-12 w-12 flex-none rounded-lg object-cover" />;
   }

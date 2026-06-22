@@ -1,9 +1,12 @@
 import type { Post } from "@/lib/types";
 
 /**
- * Renders a meme's visual. "composed" memes are drawn as a colored card with a
- * faint watermark word and two Anton caption lines (matching the design);
- * "image" memes render the uploaded picture.
+ * Renders a meme's visual:
+ *  - any post with an image (uploaded, or composed-on-an-image) shows the
+ *    picture, with top/bottom Anton captions overlaid when the meme was composed
+ *    (falling back to a single legacy caption line);
+ *  - a composed meme with no image is drawn as a colored card with a faint
+ *    watermark word and two caption lines (the original seed look).
  */
 export function MemeMedia({
   post,
@@ -16,14 +19,36 @@ export function MemeMedia({
   captionSize?: number;
   watermarkSize?: number;
 }) {
-  if (post.kind === "image" && post.imageUrl) {
+  const c = post.compose;
+
+  if (post.imageUrl) {
+    const hasOverlay = Boolean(c && (c.top || c.bottom));
     return (
       <div className="relative w-full overflow-hidden" style={{ height }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.imageUrl} alt={post.caption ?? "meme"} className="h-full w-full object-cover" />
-        {post.caption ? (
+        <img src={post.imageUrl} alt={c?.top || post.caption || "meme"} className="h-full w-full object-cover" />
+        {hasOverlay ? (
+          <>
+            {c?.top ? (
+              <div
+                className="meme-cap absolute inset-x-0 top-3 text-center"
+                style={{ fontSize: captionSize, padding: "0 18px" }}
+              >
+                {c.top}
+              </div>
+            ) : null}
+            {c?.bottom ? (
+              <div
+                className="meme-cap absolute inset-x-0 bottom-3 text-center"
+                style={{ fontSize: captionSize, padding: "0 18px" }}
+              >
+                {c.bottom}
+              </div>
+            ) : null}
+          </>
+        ) : post.caption ? (
           <div
-            className="meme-cap absolute right-0 bottom-4 left-0 text-center"
+            className="meme-cap absolute inset-x-0 bottom-4 text-center"
             style={{ fontSize: captionSize, padding: "0 18px" }}
           >
             {post.caption}
@@ -33,7 +58,6 @@ export function MemeMedia({
     );
   }
 
-  const c = post.compose;
   return (
     <div
       className="relative flex flex-col justify-between"

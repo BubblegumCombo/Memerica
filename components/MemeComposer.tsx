@@ -1,67 +1,68 @@
 "use client";
 
-import type { MemeCompose } from "@/lib/types";
+import type { ChangeEvent } from "react";
 import { MemeMedia } from "./MemeMedia";
+import { PlusIcon } from "./icons";
 
-const BG_SWATCHES = [
-  "#1e3a5f", "#3a1f24", "#243a2a", "#3c3b6e", "#b22234", "#0d0d0d", "#2a2118", "#1f2937",
-];
-
-/** Controlled in-app meme composer: colored background + watermark + two lines. */
+/**
+ * Compose a meme from an uploaded image plus top and bottom captions. The
+ * preview overlays the captions live; on publish the image goes to S3 and the
+ * captions are stored alongside it.
+ */
 export function MemeComposer({
-  value,
-  onChange,
+  imageUrl,
+  top,
+  bottom,
+  onPick,
+  onClear,
+  onTopChange,
+  onBottomChange,
 }: {
-  value: MemeCompose;
-  onChange: (next: MemeCompose) => void;
+  imageUrl?: string;
+  top: string;
+  bottom: string;
+  onPick: (e: ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+  onTopChange: (v: string) => void;
+  onBottomChange: (v: string) => void;
 }) {
-  const set = (patch: Partial<MemeCompose>) => onChange({ ...value, ...patch });
-
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="overflow-hidden rounded-[14px] border border-line">
-        <MemeMedia
-          post={{
-            id: "preview",
-            kind: "composed",
-            compose: value,
-            tagKeys: [],
-            status: "draft",
-            likeCount: 0,
-            dislikeCount: 0,
-            createdAt: "",
-          }}
-          height={220}
-          captionSize={24}
-          watermarkSize={110}
-        />
-      </div>
-
-      <div>
-        <p className="mb-2 text-[13px] font-semibold text-ink-2">Background</p>
-        <div className="flex flex-wrap gap-2">
-          {BG_SWATCHES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => set({ bg: c })}
-              aria-label={`Background ${c}`}
-              aria-pressed={value.bg === c}
-              className="h-8 w-8 rounded-full border-2"
-              style={{ background: c, borderColor: value.bg === c ? "#fafafa" : "rgba(255,255,255,0.12)" }}
-            />
-          ))}
+      {imageUrl ? (
+        <div className="relative overflow-hidden rounded-[14px] border border-line">
+          <MemeMedia
+            post={{
+              id: "preview",
+              kind: "composed",
+              imageUrl,
+              compose: { bg: "#111111", watermark: "", top, bottom },
+              tagKeys: [],
+              status: "published",
+              likeCount: 0,
+              dislikeCount: 0,
+              createdAt: "",
+            }}
+            height={300}
+            captionSize={26}
+          />
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute top-2.5 right-2.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
+          >
+            Replace
+          </button>
         </div>
-      </div>
-
-      <Field
-        label="Watermark word"
-        value={value.watermark}
-        onChange={(v) => set({ watermark: v.toUpperCase() })}
-        placeholder="e.g. CATS"
-      />
-      <Field label="Top line" value={value.top} onChange={(v) => set({ top: v })} placeholder="Top caption" />
-      <Field label="Bottom line" value={value.bottom} onChange={(v) => set({ bottom: v })} placeholder="Bottom caption" />
+      ) : (
+        <label className="flex h-[200px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-line-strong bg-input text-center">
+          <PlusIcon size={22} strokeWidth={2} />
+          <span className="text-sm font-semibold text-ink-2">Choose an image</span>
+          <span className="text-xs text-muted-2">Add top &amp; bottom captions below</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onPick} className="hidden" />
+        </label>
+      )}
+      <Field label="Top caption" value={top} onChange={onTopChange} placeholder="Top text" />
+      <Field label="Bottom caption" value={bottom} onChange={onBottomChange} placeholder="Bottom text" />
     </div>
   );
 }
