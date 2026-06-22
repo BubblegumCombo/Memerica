@@ -1,13 +1,46 @@
 "use client";
 
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight } from "./icons";
 
 /**
  * Horizontal snap carousel with drag-to-scroll, snap-on-release, click
- * suppression after a drag, and a star dot row + prev/next nav. Ports the
+ * suppression after a drag, and flag-striped prev/next arrows. Ports the
  * pointer logic from the design (Memerica.dc.html:841-869).
  */
+
+/** Left/right nav arrow filled with red/white/blue US-flag stripes. */
+function FlagArrow({ dir }: { dir: "left" | "right" }) {
+  const clip = `flag-arrow-${dir}`;
+  const arrow = "M3 9 H13 V5 L21 12 L13 19 V15 H3 Z";
+  return (
+    <svg
+      width="38"
+      height="38"
+      viewBox="0 0 24 24"
+      aria-hidden
+      style={{ transform: dir === "left" ? "scaleX(-1)" : undefined }}
+    >
+      <defs>
+        <clipPath id={clip}>
+          <path d={arrow} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${clip})`}>
+        <rect x="0" y="0" width="24" height="8" fill="#b22234" />
+        <rect x="0" y="8" width="24" height="8" fill="#f5f5f5" />
+        <rect x="0" y="16" width="24" height="8" fill="#3c3b6e" />
+      </g>
+      <path
+        d={arrow}
+        fill="none"
+        stroke="rgba(0,0,0,0.4)"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function SwipeCarousel({ children }: { children: ReactNode }) {
   const slides = Children.toArray(children);
   const count = slides.length;
@@ -103,38 +136,24 @@ export function SwipeCarousel({ children }: { children: ReactNode }) {
         ))}
       </div>
 
-      <div className="flex items-center justify-center gap-[10px] py-4">
+      <div className="flex items-center justify-center gap-10 py-4">
         <button
           type="button"
           onClick={() => tweenTo(Math.max(0, page - 1))}
-          className="p-1.5 text-muted disabled:opacity-40"
+          className="transition-opacity disabled:opacity-25"
           disabled={page === 0}
           aria-label="Previous meme"
         >
-          <ChevronLeft size={20} strokeWidth={2.4} />
+          <FlagArrow dir="left" />
         </button>
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => tweenTo(i)}
-            className="p-[5px] leading-[0]"
-            aria-label={`Go to meme ${i + 1}`}
-            aria-current={i === page ? "true" : undefined}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={i === page ? "#ffffff" : "rgba(255,255,255,0.28)"} aria-hidden>
-              <path d="M12 2l2.9 6.3 6.9.7-5.1 4.7 1.4 6.8L12 17.8 6 21.2l1.4-6.8L2.3 9.7l6.9-.7z" />
-            </svg>
-          </button>
-        ))}
         <button
           type="button"
           onClick={() => tweenTo(Math.min(count - 1, page + 1))}
-          className="p-1.5 text-muted disabled:opacity-40"
+          className="transition-opacity disabled:opacity-25"
           disabled={page === count - 1}
           aria-label="Next meme"
         >
-          <ChevronRight size={20} strokeWidth={2.4} />
+          <FlagArrow dir="right" />
         </button>
       </div>
     </div>
