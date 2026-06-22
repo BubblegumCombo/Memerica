@@ -19,6 +19,8 @@ export interface NewPostInput {
   imageUrl?: string;
   /** S3 object key for an uploaded image (persisted to posts.image_path). */
   imageKey?: string;
+  /** SHA-256 hex of the image bytes (persisted to posts.image_hash). */
+  imageHash?: string;
   compose?: MemeCompose;
   caption?: string;
   tagKeys: string[];
