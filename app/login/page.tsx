@@ -7,7 +7,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-type Busy = null | "password" | "magic" | "google";
+type Busy = null | "password" | "magic";
 
 export default function LoginPage() {
   const configured = isSupabaseConfigured();
@@ -53,22 +53,6 @@ export default function LoginPage() {
     }
   }
 
-  async function googleSignIn() {
-    setError(null);
-    setBusy("google");
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) throw error;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start Google sign-in.");
-      setBusy(null);
-    }
-  }
-
   return (
     <AppShell className="min-h-[100dvh]">
       <div
@@ -90,19 +74,6 @@ export default function LoginPage() {
           </div>
         ) : (
           <div className="mt-8 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={googleSignIn}
-              disabled={busy !== null}
-              className="flex h-12 items-center justify-center gap-2 rounded-[12px] border border-line-strong bg-input text-[15px] font-semibold text-ink disabled:opacity-50"
-            >
-              Continue with Google
-            </button>
-
-            <div className="my-1 flex items-center gap-3 text-xs text-muted-2">
-              <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-            </div>
-
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
