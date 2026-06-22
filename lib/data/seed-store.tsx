@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Comment, Invitation, Member, Post, Role, Tag, Vote } from "@/lib/types";
 import { feedForMember } from "@/lib/feed";
+import { cdnUrl } from "@/lib/aws/config";
 import { StoreContext, type NewPostInput, type Store } from "./store-context";
 import {
   COMMENTS,
@@ -146,6 +147,10 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setAvatar = useCallback((imageKey: string) => {
+    setYou((prev) => ({ ...prev, avatarUrl: cdnUrl(imageKey) }));
+  }, []);
+
   const publishPost = useCallback((input: NewPostInput) => {
     const id = `p${seq.current.post++}`;
     const post: Post = {
@@ -203,10 +208,11 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
       toggleMemberTag,
       setTagAdminOnly,
       toggleMyTag,
+      setAvatar,
       publishPost,
       addInvitation,
     }),
-    [you, members, tags, posts, comments, reactions, invitations, feed, vote, addComment, voteComment, setRole, createTag, toggleMemberTag, setTagAdminOnly, toggleMyTag, publishPost, addInvitation],
+    [you, members, tags, posts, comments, reactions, invitations, feed, vote, addComment, voteComment, setRole, createTag, toggleMemberTag, setTagAdminOnly, toggleMyTag, setAvatar, publishPost, addInvitation],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

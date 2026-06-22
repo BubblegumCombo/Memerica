@@ -217,7 +217,7 @@ export default function UploadPage() {
                       onClick={() => toggleNewMember(m.id)}
                       className="flex items-center gap-[11px] px-1 py-[7px] text-left"
                     >
-                      <Avatar initials={m.initials} color={m.color} size={32} />
+                      <Avatar initials={m.initials} color={m.color} size={32} imageUrl={m.avatarUrl} />
                       <span className="flex-1 text-sm font-semibold text-[#e8e8e8]">{m.name}</span>
                       <span
                         className="flex h-6 w-6 items-center justify-center rounded-[7px] border-[1.5px] text-xs font-bold text-white"

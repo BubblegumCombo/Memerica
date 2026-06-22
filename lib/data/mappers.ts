@@ -27,7 +27,15 @@ export function mapMember(
   role: Member["role"],
   tagKeys: string[],
 ): Member {
-  return { id: p.id, name: p.name, initials: p.initials, color: p.color, role, tagKeys };
+  return {
+    id: p.id,
+    name: p.name,
+    initials: p.initials,
+    color: p.color,
+    role,
+    tagKeys,
+    avatarUrl: p.avatar_path ? cdnUrl(p.avatar_path) : undefined,
+  };
 }
 
 export function mapPost(p: Tables["posts"]["Row"], tagKeys: string[]): Post {

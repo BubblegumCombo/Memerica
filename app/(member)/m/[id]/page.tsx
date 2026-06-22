@@ -146,7 +146,7 @@ export default function CommentsPage() {
           </div>
         ) : null}
         <div className="flex items-center gap-2.5">
-          <Avatar initials={you.initials} color={you.color} size={32} />
+          <Avatar initials={you.initials} color={you.color} size={32} imageUrl={you.avatarUrl} />
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -203,7 +203,7 @@ function CommentItem({
   const canReply = !replyParentId.startsWith("tmp-");
   return (
     <div className={`flex gap-[11px] py-3.5 pr-4 ${isReply ? "pl-14" : "pl-4"}`}>
-      <Avatar initials={comment.initials} color={comment.color} size={isReply ? 28 : 34} />
+      <Avatar initials={comment.initials} color={comment.color} size={isReply ? 28 : 34} imageUrl={comment.avatarUrl} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="text-[13px] font-semibold">{comment.author}</span>

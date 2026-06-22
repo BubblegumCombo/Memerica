@@ -21,6 +21,8 @@ export interface Member {
   role: Role;
   /** Tag keys the admin has assigned to this member; drives their feed. */
   tagKeys: string[];
+  /** CDN URL of the uploaded profile picture, if any. */
+  avatarUrl?: string;
 }
 
 export interface Tag {
@@ -66,6 +68,8 @@ export interface Comment {
   author: string;
   initials: string;
   color: string;
+  /** CDN URL of the author's profile picture, if any. */
+  avatarUrl?: string;
   text: string;
   /** Relative time label, e.g. "1h". */
   time: string;
