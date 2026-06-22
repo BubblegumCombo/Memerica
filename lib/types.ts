@@ -59,6 +59,8 @@ export interface Post {
 export interface Comment {
   id: string;
   postId: string;
+  /** Parent comment id when this is a reply; null/undefined for a top-level comment. */
+  parentId?: string | null;
   author: string;
   initials: string;
   color: string;

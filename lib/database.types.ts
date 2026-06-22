@@ -56,6 +56,7 @@ export type Database = {
           created_at: string
           down_count: number
           id: string
+          parent_id: string | null
           post_id: string
           up_count: number
         }
@@ -65,6 +66,7 @@ export type Database = {
           created_at?: string
           down_count?: number
           id?: string
+          parent_id?: string | null
           post_id: string
           up_count?: number
         }
@@ -74,6 +76,7 @@ export type Database = {
           created_at?: string
           down_count?: number
           id?: string
+          parent_id?: string | null
           post_id?: string
           up_count?: number
         }
@@ -83,6 +86,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
             referencedColumns: ["id"]
           },
           {

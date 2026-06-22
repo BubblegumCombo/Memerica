@@ -196,6 +196,7 @@ async function loadAll(supabase: Client, uid: string): Promise<LoadedState> {
       const comment: Comment = {
         id: c.id,
         postId: c.post_id,
+        parentId: c.parent_id,
         author: author?.name ?? "Member",
         initials: author?.initials ?? "??",
         color: author?.color ?? "#3b82f6",
@@ -329,14 +330,18 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     })().catch((e) => console.error("vote failed", e));
   };
 
-  const addComment = (postId: string, text: string) => {
+  const addComment = (postId: string, text: string, parentId?: string | null) => {
     const s = stateRef.current;
     const body = text.trim();
     if (!s || !body) return;
     const tempId = `tmp-${crypto.randomUUID()}`;
+    // Never persist an unreconciled parent id: a tmp- parent isn't a real uuid,
+    // so coerce it to a top-level comment instead of writing a bad FK.
+    const safeParentId = parentId && !parentId.startsWith("tmp-") ? parentId : null;
     const comment: Comment = {
       id: tempId,
       postId,
+      parentId: safeParentId,
       author: s.you.name,
       initials: s.you.initials,
       color: s.you.color,
@@ -352,7 +357,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     }));
     void supabase
       .from("comments")
-      .insert({ post_id: postId, author_id: s.uid, body })
+      .insert({ post_id: postId, author_id: s.uid, body, parent_id: safeParentId })
       .select("id")
       .single()
       .then(({ data }) => {
@@ -360,7 +365,15 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
           ...st,
           comments: {
             ...st.comments,
-            [postId]: (st.comments[postId] ?? []).map((c) => (c.id === tempId ? { ...c, id: data.id } : c)),
+            // Reconcile the temp id, and re-point any optimistic child reply
+            // that was attached to it onto the now-real parent id.
+            [postId]: (st.comments[postId] ?? []).map((c) =>
+              c.id === tempId
+                ? { ...c, id: data.id }
+                : c.parentId === tempId
+                  ? { ...c, parentId: data.id }
+                  : c,
+            ),
           },
         }));
       })

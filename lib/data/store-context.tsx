@@ -46,7 +46,7 @@ export interface Store {
   audienceCount: (tagKeys: string[]) => number;
 
   vote: (postId: string, dir: 1 | -1) => void;
-  addComment: (postId: string, text: string) => void;
+  addComment: (postId: string, text: string, parentId?: string | null) => void;
   voteComment: (postId: string, commentId: string, dir: 1 | -1) => void;
   setRole: (role: Role) => void;
   createTag: (name: string, memberIds: string[]) => string;

@@ -57,12 +57,13 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const addComment = useCallback(
-    (postId: string, text: string) => {
+    (postId: string, text: string, parentId?: string | null) => {
       const body = text.trim();
       if (!body) return;
       const comment: Comment = {
         id: `u${seq.current.comment++}`,
         postId,
+        parentId: parentId ?? null,
         author: you.name,
         initials: you.initials,
         color: you.color,

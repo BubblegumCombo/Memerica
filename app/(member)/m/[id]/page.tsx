@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import type { Post } from "@/lib/types";
+import { Fragment, useState } from "react";
+import type { Comment, Post } from "@/lib/types";
 import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
 import { useStore } from "@/lib/data/store";
@@ -18,9 +18,21 @@ export default function CommentsPage() {
   const router = useRouter();
   const { getPost, getComments, voteComment, addComment, you } = useStore();
   const [draft, setDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
 
   const post = getPost(id);
   const comments = getComments(id);
+  const topLevel = comments.filter((c) => !c.parentId);
+  const repliesByParent = comments.reduce<Record<string, Comment[]>>((acc, c) => {
+    if (c.parentId) (acc[c.parentId] ??= []).push(c);
+    return acc;
+  }, {});
+  const topLevelIds = new Set(topLevel.map((c) => c.id));
+  // Replies whose parent isn't a loaded top-level comment (deletes, partial
+  // loads, an unreconciled optimistic parent) — surface them so nothing is dropped.
+  const orphanReplies = Object.entries(repliesByParent)
+    .filter(([pid]) => !topLevelIds.has(pid))
+    .flatMap(([, rs]) => rs);
 
   if (!post) {
     return (
@@ -39,8 +51,17 @@ export default function CommentsPage() {
   const summary = `${fmt(post.likeCount)} liked · ${fmt(post.dislikeCount)} disliked`;
 
   function send() {
-    addComment(id, draft);
+    if (!draft.trim()) return;
+    addComment(id, draft, replyTo?.id ?? null);
     setDraft("");
+    setReplyTo(null);
+  }
+
+  // Replies are one level deep: replying to a reply attaches to its top-level
+  // parent, so we seed an @mention to keep that addressee visible.
+  function startReply(c: Comment) {
+    setReplyTo({ id: c.parentId ?? c.id, author: c.author });
+    if (c.parentId) setDraft((d) => (d.trim() ? d : `@${c.author} `));
   }
 
   return (
@@ -70,38 +91,32 @@ export default function CommentsPage() {
           </div>
         </div>
 
-        {comments.map((c) => (
-          <div key={c.id} className="flex gap-[11px] px-4 py-3.5">
-            <Avatar initials={c.initials} color={c.color} size={34} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-2">
-                <span className="text-[13px] font-semibold">{c.author}</span>
-                <span className="text-[11px] text-muted-2">{c.time}</span>
-              </div>
-              <div className="mt-0.5 text-sm leading-snug text-ink-2">{c.text}</div>
-              <div className="mt-2 flex items-center gap-1.5">
-                <button
-                  onClick={() => voteComment(id, c.id, 1)}
-                  aria-label="Upvote comment"
-                  className="flex items-center gap-[5px] px-1.5 py-[3px] text-xs font-semibold"
-                  style={{ color: c.vote === 1 ? LIKE : MUTED }}
-                >
-                  <ThumbUp size={15} strokeWidth={2} fill={c.vote === 1 ? LIKE : "none"} />
-                  <span className="tabular-nums">{c.up}</span>
-                </button>
-                <button
-                  onClick={() => voteComment(id, c.id, -1)}
-                  aria-label="Downvote comment"
-                  className="flex items-center gap-[5px] px-1.5 py-[3px] text-xs font-semibold"
-                  style={{ color: c.vote === -1 ? DISLIKE : MUTED }}
-                >
-                  <ThumbDown size={15} strokeWidth={2} fill={c.vote === -1 ? DISLIKE : "none"} />
-                  <span className="tabular-nums">{c.down}</span>
-                </button>
-                <span className="px-1.5 py-[3px] text-xs font-semibold text-muted-2">Reply</span>
-              </div>
-            </div>
-          </div>
+        {topLevel.map((c) => (
+          <Fragment key={c.id}>
+            <CommentItem
+              comment={c}
+              onVote={(dir) => voteComment(id, c.id, dir)}
+              onReply={() => startReply(c)}
+            />
+            {(repliesByParent[c.id] ?? []).map((r) => (
+              <CommentItem
+                key={r.id}
+                comment={r}
+                isReply
+                onVote={(dir) => voteComment(id, r.id, dir)}
+                onReply={() => startReply(r)}
+              />
+            ))}
+          </Fragment>
+        ))}
+
+        {orphanReplies.map((r) => (
+          <CommentItem
+            key={r.id}
+            comment={r}
+            onVote={(dir) => voteComment(id, r.id, dir)}
+            onReply={() => startReply(r)}
+          />
         ))}
 
         {comments.length === 0 ? (
@@ -113,27 +128,43 @@ export default function CommentsPage() {
 
       {/* composer */}
       <div
-        className="flex items-center gap-2.5 border-t border-line-soft bg-bar px-3 pt-2.5"
+        className="border-t border-line-soft bg-bar px-3 pt-2.5"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)" }}
       >
-        <Avatar initials={you.initials} color={you.color} size={32} />
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") send();
-          }}
-          placeholder="Add a comment…"
-          className="h-10 flex-1 rounded-[20px] border border-line-strong bg-input-2 px-4 text-sm text-ink outline-none placeholder:text-muted-2"
-        />
-        <button
-          onClick={send}
-          disabled={!draft.trim()}
-          aria-label="Send comment"
-          className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-like text-white disabled:opacity-50"
-        >
-          <SendIcon />
-        </button>
+        {replyTo ? (
+          <div className="mb-2 flex items-center justify-between rounded-lg bg-input-2 px-3 py-1.5 text-xs text-muted">
+            <span>
+              Replying to <span className="font-semibold text-ink-2">{replyTo.author}</span>
+            </span>
+            <button
+              onClick={() => setReplyTo(null)}
+              aria-label="Cancel reply"
+              className="px-1 text-sm font-semibold text-muted-2"
+            >
+              ✕
+            </button>
+          </div>
+        ) : null}
+        <div className="flex items-center gap-2.5">
+          <Avatar initials={you.initials} color={you.color} size={32} />
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) send();
+            }}
+            placeholder={replyTo ? `Reply to ${replyTo.author}…` : "Add a comment…"}
+            className="h-10 flex-1 rounded-[20px] border border-line-strong bg-input-2 px-4 text-sm text-ink outline-none placeholder:text-muted-2"
+          />
+          <button
+            onClick={send}
+            disabled={!draft.trim()}
+            aria-label="Send comment"
+            className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-like text-white disabled:opacity-50"
+          >
+            <SendIcon />
+          </button>
+        </div>
       </div>
     </AppShell>
   );
@@ -152,6 +183,62 @@ function MemeThumb({ post }: { post: Post }) {
       <span className="meme-cap" style={{ fontSize: 9, lineHeight: 1 }}>
         {post.compose?.watermark}
       </span>
+    </div>
+  );
+}
+
+function CommentItem({
+  comment,
+  isReply = false,
+  onVote,
+  onReply,
+}: {
+  comment: Comment;
+  isReply?: boolean;
+  onVote: (dir: 1 | -1) => void;
+  onReply: () => void;
+}) {
+  // Don't allow replying until the (resolved) parent has a real persisted id.
+  const replyParentId = comment.parentId ?? comment.id;
+  const canReply = !replyParentId.startsWith("tmp-");
+  return (
+    <div className={`flex gap-[11px] py-3.5 pr-4 ${isReply ? "pl-14" : "pl-4"}`}>
+      <Avatar initials={comment.initials} color={comment.color} size={isReply ? 28 : 34} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[13px] font-semibold">{comment.author}</span>
+          <span className="text-[11px] text-muted-2">{comment.time}</span>
+        </div>
+        <div className="mt-0.5 text-sm leading-snug text-ink-2">{comment.text}</div>
+        <div className="mt-2 flex items-center gap-1.5">
+          <button
+            onClick={() => onVote(1)}
+            aria-label="Upvote comment"
+            className="flex items-center gap-[5px] px-1.5 py-[3px] text-xs font-semibold"
+            style={{ color: comment.vote === 1 ? LIKE : MUTED }}
+          >
+            <ThumbUp size={15} strokeWidth={2} fill={comment.vote === 1 ? LIKE : "none"} />
+            <span className="tabular-nums">{comment.up}</span>
+          </button>
+          <button
+            onClick={() => onVote(-1)}
+            aria-label="Downvote comment"
+            className="flex items-center gap-[5px] px-1.5 py-[3px] text-xs font-semibold"
+            style={{ color: comment.vote === -1 ? DISLIKE : MUTED }}
+          >
+            <ThumbDown size={15} strokeWidth={2} fill={comment.vote === -1 ? DISLIKE : "none"} />
+            <span className="tabular-nums">{comment.down}</span>
+          </button>
+          <button
+            onClick={onReply}
+            disabled={!canReply}
+            aria-label={`Reply to ${comment.author}`}
+            className="px-1.5 py-[3px] text-xs font-semibold text-muted-2 disabled:opacity-40"
+          >
+            Reply
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
