@@ -30,6 +30,8 @@ export interface Tag {
   dot: string;
   /** Number of posts carrying this tag (admin stat). */
   posts: number;
+  /** When true, only the admin may assign this tag to members (e.g. based, truth). */
+  adminOnly: boolean;
 }
 
 /** A meme composed in-app: colored card + faint watermark word + two caption lines. */

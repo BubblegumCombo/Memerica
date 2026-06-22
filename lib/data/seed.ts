@@ -38,12 +38,12 @@ export const MEMBERS: Member[] = [
 ];
 
 export const TAGS: Tag[] = [
-  { key: "gaming", label: "Gaming", dot: "#3b82f6", posts: 28 },
-  { key: "anime", label: "Anime", dot: "#ec4899", posts: 14 },
-  { key: "truth", label: "Truth", dot: "#eab308", posts: 41 },
-  { key: "based", label: "Based", dot: "#22c55e", posts: 33 },
-  { key: "cats", label: "Cats", dot: "#f59e0b", posts: 22 },
-  { key: "dogs", label: "Dogs", dot: "#06b6d4", posts: 9 },
+  { key: "gaming", label: "Gaming", dot: "#3b82f6", posts: 28, adminOnly: false },
+  { key: "anime", label: "Anime", dot: "#ec4899", posts: 14, adminOnly: false },
+  { key: "truth", label: "Truth", dot: "#eab308", posts: 41, adminOnly: true },
+  { key: "based", label: "Based", dot: "#22c55e", posts: 33, adminOnly: true },
+  { key: "cats", label: "Cats", dot: "#f59e0b", posts: 22, adminOnly: false },
+  { key: "dogs", label: "Dogs", dot: "#06b6d4", posts: 9, adminOnly: false },
 ];
 
 export const POSTS: Post[] = [

@@ -107,7 +107,7 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
     setTags((prev) =>
       prev.some((t) => t.key === key)
         ? prev
-        : [...prev, { key, label: trimmed || key, dot: TAG_PALETTE[prev.length % TAG_PALETTE.length], posts: 0 }],
+        : [...prev, { key, label: trimmed || key, dot: TAG_PALETTE[prev.length % TAG_PALETTE.length], posts: 0, adminOnly: false }],
     );
     setMembers((prev) =>
       prev.map((m) =>
@@ -130,6 +130,20 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
             },
       ),
     );
+  }, []);
+
+  const setTagAdminOnly = useCallback((tagKey: string, adminOnly: boolean) => {
+    setTags((prev) => prev.map((t) => (t.key === tagKey ? { ...t, adminOnly } : t)));
+  }, []);
+
+  // The profile picker only offers non-admin-only tags, so this is UI-gated.
+  const toggleMyTag = useCallback((tagKey: string) => {
+    setYou((prev) => ({
+      ...prev,
+      tagKeys: prev.tagKeys.includes(tagKey)
+        ? prev.tagKeys.filter((k) => k !== tagKey)
+        : [...prev.tagKeys, tagKey],
+    }));
   }, []);
 
   const publishPost = useCallback((input: NewPostInput) => {
@@ -187,10 +201,12 @@ export function SeedStoreProvider({ children }: { children: ReactNode }) {
       setRole,
       createTag,
       toggleMemberTag,
+      setTagAdminOnly,
+      toggleMyTag,
       publishPost,
       addInvitation,
     }),
-    [you, members, tags, posts, comments, reactions, invitations, feed, vote, addComment, voteComment, setRole, createTag, toggleMemberTag, publishPost, addInvitation],
+    [you, members, tags, posts, comments, reactions, invitations, feed, vote, addComment, voteComment, setRole, createTag, toggleMemberTag, setTagAdminOnly, toggleMyTag, publishPost, addInvitation],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

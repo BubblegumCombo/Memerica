@@ -19,7 +19,7 @@ export function relativeTime(iso: string): string {
 }
 
 export function mapTag(t: Tables["tags"]["Row"], posts: number): Tag {
-  return { key: t.key, label: t.label, dot: t.dot, posts };
+  return { key: t.key, label: t.label, dot: t.dot, posts, adminOnly: t.admin_only };
 }
 
 export function mapMember(

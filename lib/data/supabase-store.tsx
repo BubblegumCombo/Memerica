@@ -55,6 +55,8 @@ const EMPTY_STORE: Store = {
   setRole: () => {},
   createTag: () => "",
   toggleMemberTag: () => {},
+  setTagAdminOnly: () => {},
+  toggleMyTag: () => {},
   publishPost: () => "",
   addInvitation: () => {},
 };
@@ -422,7 +424,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
     const dot = TAG_PALETTE[s.tags.length % TAG_PALETTE.length];
     patch((st) => ({
       ...st,
-      tags: st.tags.some((t) => t.key === key) ? st.tags : [...st.tags, { key, label: trimmed, dot, posts: 0 }],
+      tags: st.tags.some((t) => t.key === key) ? st.tags : [...st.tags, { key, label: trimmed, dot, posts: 0, adminOnly: false }],
       tagIdByKey: { ...st.tagIdByKey, [key]: tagId },
       members: st.members.map((m) =>
         memberIds.includes(m.id) && !m.tagKeys.includes(key) ? { ...m, tagKeys: [...m.tagKeys, key] } : m,
@@ -465,6 +467,50 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
         await supabase.from("member_tags").upsert({ space_id: s.spaceId, user_id: memberId, tag_id: tagId });
       }
     })().catch((e) => console.error("toggleMemberTag failed", e));
+  };
+
+  // Member self-assigns/removes a non-admin-only tag, then reloads so the feed
+  // (which the DB filters by tag visibility) reflects the change.
+  const toggleMyTag = (tagKey: string) => {
+    const s = stateRef.current;
+    if (!s) return;
+    const tag = s.tags.find((t) => t.key === tagKey);
+    if (!tag || tag.adminOnly) return;
+    const tagId = s.tagIdByKey[tagKey];
+    const had = s.you.tagKeys.includes(tagKey);
+    patch((st) => ({
+      ...st,
+      you: {
+        ...st.you,
+        tagKeys: had ? st.you.tagKeys.filter((t) => t !== tagKey) : [...st.you.tagKeys, tagKey],
+      },
+    }));
+    if (!tagId) return;
+    void (async () => {
+      if (had) {
+        await supabase.from("member_tags").delete().eq("user_id", s.uid).eq("tag_id", tagId);
+      } else {
+        await supabase.from("member_tags").upsert({ space_id: s.spaceId, user_id: s.uid, tag_id: tagId });
+      }
+      const loaded = await loadAll(supabase, s.uid);
+      setState(loaded);
+    })().catch((e) => console.error("toggleMyTag failed", e));
+  };
+
+  const setTagAdminOnly = (tagKey: string, adminOnly: boolean) => {
+    const s = stateRef.current;
+    if (!s) return;
+    const tagId = s.tagIdByKey[tagKey];
+    patch((st) => ({
+      ...st,
+      tags: st.tags.map((t) => (t.key === tagKey ? { ...t, adminOnly } : t)),
+    }));
+    if (!tagId) return;
+    void supabase
+      .from("tags")
+      .update({ admin_only: adminOnly })
+      .eq("id", tagId)
+      .then(undefined, (e) => console.error("setTagAdminOnly failed", e));
   };
 
   const publishPost = (input: NewPostInput): string => {
@@ -551,6 +597,8 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
       setRole: () => {},
       createTag,
       toggleMemberTag,
+      setTagAdminOnly,
+      toggleMyTag,
       publishPost,
       addInvitation,
     };
