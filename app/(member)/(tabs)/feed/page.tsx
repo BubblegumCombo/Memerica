@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useStore } from "@/lib/data/store";
 import { SwipeCarousel } from "@/components/SwipeCarousel";
 import { MemeMedia } from "@/components/MemeMedia";
@@ -21,16 +20,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="relative flex h-full flex-col">
-      <div className="absolute top-2 right-3 z-10">
-        <Link
-          href="/reel"
-          className="rounded-full bg-white/5 px-3 py-1.5 text-xs font-semibold text-muted"
-        >
-          Reel
-        </Link>
-      </div>
-
+    <div className="flex h-full flex-col">
       <SwipeCarousel>
         {feed.map((post) => (
           <div key={post.id} className="px-[18px] pt-1">

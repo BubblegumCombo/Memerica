@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type Phase = "loading" | "ready" | "joining" | "error";
-type Busy = null | "google" | "password" | "magic";
+type Busy = null | "password" | "magic";
 
 export default function JoinPage() {
   const { code } = useParams<{ code: string }>();
@@ -70,18 +70,6 @@ export default function JoinPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, configured]);
-
-  async function google() {
-    setNotice(null);
-    setError(null);
-    setBusy("google");
-    const supabase = createClient();
-    const { error: e } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
-    if (e) {
-      setError(e.message);
-      setBusy(null);
-    }
-  }
 
   async function emailPassword() {
     const value = email.trim();
@@ -173,19 +161,6 @@ export default function JoinPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={google}
-                disabled={busy !== null}
-                className="flex h-12 items-center justify-center gap-2 rounded-[12px] border border-line-strong bg-input text-[15px] font-semibold text-ink disabled:opacity-50"
-              >
-                Continue with Google
-              </button>
-
-              <div className="my-1 flex items-center gap-3 text-xs text-muted-2">
-                <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-              </div>
-
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
