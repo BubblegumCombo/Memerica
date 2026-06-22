@@ -49,7 +49,7 @@ export default function TagsPage() {
           {members.map((m) => (
             <div key={m.id} className="rounded-[14px] border border-line bg-card p-3.5">
               <div className="flex items-center gap-2.5">
-                <Avatar initials={m.initials} color={m.color} size={36} />
+                <Avatar initials={m.initials} color={m.color} size={36} imageUrl={m.avatarUrl} />
                 <span className="flex-1 text-sm font-semibold">{m.name}</span>
                 <span className="text-xs text-muted-2">{m.tagKeys.length} tags</span>
               </div>

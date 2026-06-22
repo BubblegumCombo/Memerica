@@ -55,6 +55,8 @@ export interface Store {
   setTagAdminOnly: (tagKey: string, adminOnly: boolean) => void;
   /** Member adds/removes a non-admin-only tag from their own feed. */
   toggleMyTag: (tagKey: string) => void;
+  /** Member sets their profile picture (an S3 object key from uploadImage). */
+  setAvatar: (imageKey: string) => void;
   publishPost: (input: NewPostInput) => string;
   addInvitation: (email: string, name?: string) => void;
 }

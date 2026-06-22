@@ -16,6 +16,7 @@ import type { Json } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { StoreContext, type NewPostInput, type Store } from "./store-context";
 import { mapMember, mapPost, mapTag, relativeTime } from "./mappers";
+import { cdnUrl } from "@/lib/aws/config";
 
 const TAG_PALETTE = [
   "#3b82f6", "#ec4899", "#eab308", "#22c55e", "#f59e0b", "#06b6d4", "#a855f7", "#f97316", "#14b8a6",
@@ -57,6 +58,7 @@ const EMPTY_STORE: Store = {
   toggleMemberTag: () => {},
   setTagAdminOnly: () => {},
   toggleMyTag: () => {},
+  setAvatar: () => {},
   publishPost: () => "",
   addInvitation: () => {},
 };
@@ -175,11 +177,14 @@ async function loadAll(supabase: Client, uid: string): Promise<LoadedState> {
       .order("created_at", { ascending: true });
     const commentIds = (commentRows ?? []).map((c) => c.id);
     const authorIds = Array.from(new Set((commentRows ?? []).map((c) => c.author_id).filter((id): id is string => Boolean(id))));
-    const authorById = new Map<string, { name: string; initials: string; color: string }>();
+    const authorById = new Map<
+      string,
+      { name: string; initials: string; color: string; avatar_path: string | null }
+    >();
     if (authorIds.length) {
       const { data: authorRows } = await supabase
         .from("profiles")
-        .select("id, name, initials, color")
+        .select("id, name, initials, color, avatar_path")
         .in("id", authorIds);
       for (const a of authorRows ?? []) authorById.set(a.id, a);
     }
@@ -202,6 +207,7 @@ async function loadAll(supabase: Client, uid: string): Promise<LoadedState> {
         author: author?.name ?? "Member",
         initials: author?.initials ?? "??",
         color: author?.color ?? "#3b82f6",
+        avatarUrl: author?.avatar_path ? cdnUrl(author.avatar_path) : undefined,
         text: c.body,
         time: relativeTime(c.created_at),
         up: c.up_count,
@@ -514,6 +520,17 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
       .then(undefined, (e) => console.error("setTagAdminOnly failed", e));
   };
 
+  const setAvatar = (imageKey: string) => {
+    const s = stateRef.current;
+    if (!s) return;
+    patch((st) => ({ ...st, you: { ...st.you, avatarUrl: cdnUrl(imageKey) } }));
+    void supabase
+      .from("profiles")
+      .update({ avatar_path: imageKey })
+      .eq("id", s.uid)
+      .then(undefined, (e) => console.error("setAvatar failed", e));
+  };
+
   const publishPost = (input: NewPostInput): string => {
     const s = stateRef.current;
     if (!s) return "";
@@ -600,6 +617,7 @@ export function SupabaseStoreProvider({ children }: { children: ReactNode }) {
       toggleMemberTag,
       setTagAdminOnly,
       toggleMyTag,
+      setAvatar,
       publishPost,
       addInvitation,
     };

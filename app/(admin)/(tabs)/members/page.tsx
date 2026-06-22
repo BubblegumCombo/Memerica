@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { LinkIcon, CheckIcon } from "@/components/icons";
 
 export default function MembersPage() {
-  const { space, members, invitations, addInvitation } = useStore();
+  const { space, members, invitations, addInvitation, you } = useStore();
   const [origin, setOrigin] = useState("");
   // Read the live origin after mount (client-only) so the copyable link points
   // at the real domain without a hydration mismatch.
@@ -109,14 +109,14 @@ export default function MembersPage() {
         </p>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-3 rounded-[12px] border border-line bg-card px-3.5 py-3">
-            <Avatar initials="YO" color="#3b82f6" size={36} />
+            <Avatar initials={you.initials} color={you.color} size={36} imageUrl={you.avatarUrl} />
             <span className="flex-1 text-sm font-semibold">
               You <span className="font-normal text-muted-2">· admin</span>
             </span>
           </div>
           {members.map((m) => (
             <div key={m.id} className="flex items-center gap-3 rounded-[12px] border border-line bg-card px-3.5 py-3">
-              <Avatar initials={m.initials} color={m.color} size={36} />
+              <Avatar initials={m.initials} color={m.color} size={36} imageUrl={m.avatarUrl} />
               <span className="flex-1 text-sm font-semibold">{m.name}</span>
               <span className="text-xs text-muted-2">{m.tagKeys.length} tags</span>
             </div>
