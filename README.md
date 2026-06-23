@@ -55,6 +55,6 @@ Setup (new, dedicated AWS account):
 2. Create a least-privilege IAM user for the presign route with `s3:PutObject` on `arn:aws:s3:::memerica-uploads/uploads/*`; put its keys + `AWS_REGION` + `S3_BUCKET` in `.env.local`.
 3. Deploy the image-processing Lambda in `infra/lambda/process-image/` and wire it to the bucket's `s3:ObjectCreated:*` event (see that folder's README) — it writes WebP derivatives and runs Rekognition moderation.
 
-Helpers in place: `lib/aws/*`, the presign route, `lib/upload.ts` (client direct-to-S3), and `lib/composeToPng.ts` (renders a composed meme to a PNG for upload). The remaining live step is calling these from the Upload screen and persisting the returned key on the post.
+Helpers in place: `lib/aws/*`, the presign route, and `lib/upload.ts` (client direct-to-S3). The Upload screen calls these and persists the returned key on the post; composed memes upload the raw image and overlay the top/bottom captions at render time (`components/MemeMedia.tsx`) instead of flattening to a PNG.
 
 :)
