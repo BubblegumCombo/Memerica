@@ -41,6 +41,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hashInfo, setHashInfo] = useState<{ file: File; hash: string } | null>(null);
+  const [videoInfo, setVideoInfo] = useState<{ file: File; tooLong: boolean } | null>(null);
 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -48,14 +49,16 @@ export default function UploadPage() {
 
   const current = batch[batchIndex];
   const remaining = mode === "upload" ? Math.max(0, batch.length - batchIndex - 1) : 0;
-  const canPublish = mode === "compose" ? Boolean(composeFile) : Boolean(current);
 
   const activeFile = mode === "compose" ? composeFile : current?.file;
-  // Only trust the hash once it belongs to the file currently shown.
+  // Only trust each derived value once it belongs to the file currently shown.
   const activeHash = hashInfo && hashInfo.file === activeFile ? hashInfo.hash : null;
   const dupWarning = activeHash !== null && posts.some((p) => p.imageHash === activeHash);
+  const videoTooLong = videoInfo && videoInfo.file === activeFile ? videoInfo.tooLong : false;
+  const canPublish =
+    (mode === "compose" ? Boolean(composeFile) : Boolean(current)) && !videoTooLong;
 
-  // Hash the active image so we can flag a re-upload of the same picture.
+  // Hash the active file so we can flag a re-upload of the same image/video.
   useEffect(() => {
     if (!activeFile) return;
     let cancelled = false;
@@ -65,6 +68,20 @@ export default function UploadPage() {
     return () => {
       cancelled = true;
     };
+  }, [activeFile]);
+
+  // Reject videos longer than a minute (checked client-side via metadata).
+  useEffect(() => {
+    if (!activeFile || !activeFile.type.startsWith("video/")) return;
+    const url = URL.createObjectURL(activeFile);
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.onloadedmetadata = () => {
+      setVideoInfo({ file: activeFile, tooLong: v.duration > 60.5 });
+      URL.revokeObjectURL(url);
+    };
+    v.src = url;
+    return () => URL.revokeObjectURL(url);
   }, [activeFile]);
 
   const matchedMembers = members.filter((m) => m.tagKeys.some((t) => selected.includes(t)));
@@ -181,9 +198,20 @@ export default function UploadPage() {
               onBottomChange={(v) => setCompose({ ...compose, bottom: v })}
             />
           ) : current ? (
-            <div className="relative overflow-hidden rounded-[14px] border border-line">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={current.url} alt="upload preview" className="max-h-[320px] w-full object-cover" />
+            <div className="relative overflow-hidden rounded-[14px] border border-line bg-black">
+              {current.file.type.startsWith("video/") ? (
+                <video
+                  src={current.url}
+                  className="max-h-[320px] w-full object-contain"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={current.url} alt="upload preview" className="max-h-[320px] w-full object-contain" />
+              )}
               <button
                 type="button"
                 onClick={clearBatch}
@@ -200,12 +228,12 @@ export default function UploadPage() {
           ) : (
             <label className="flex h-[200px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-line-strong bg-input text-center">
               <PlusIcon size={22} strokeWidth={2} />
-              <span className="text-sm font-semibold text-ink-2">Choose one or more images</span>
-              <span className="text-xs text-muted-2">Publish each with its own tags</span>
+              <span className="text-sm font-semibold text-ink-2">Choose images or a video</span>
+              <span className="text-xs text-muted-2">Videos up to 1 min · publish each with its own tags</span>
               <input
                 type="file"
                 multiple
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime"
                 onChange={pickBatch}
                 className="hidden"
               />
@@ -347,7 +375,13 @@ export default function UploadPage() {
 
         {dupWarning ? (
           <div className="mt-[18px] rounded-[10px] border border-draft/40 bg-draft/10 px-3 py-2 text-xs font-semibold text-draft">
-            Heads up — this image looks like one that’s already been posted. You can publish it anyway.
+            Heads up — this looks like one that’s already been posted. You can publish it anyway.
+          </div>
+        ) : null}
+
+        {videoTooLong ? (
+          <div className="mt-[18px] rounded-[10px] border border-dislike/40 bg-dislike/10 px-3 py-2 text-xs font-semibold text-dislike">
+            Videos must be 1 minute or less — pick a shorter clip.
           </div>
         ) : null}
 

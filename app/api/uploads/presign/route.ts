@@ -6,8 +6,22 @@ import { S3_BUCKET, cdnUrl, isS3Configured } from "@/lib/aws/config";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp"]);
-const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+const ALLOWED = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
+const EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+};
 
 /**
  * Returns a presigned S3 PUT URL so the client uploads image bytes directly to
@@ -41,7 +55,7 @@ export async function POST(request: Request) {
 
   const key = `uploads/${crypto.randomUUID()}.${EXT[contentType]}`;
   const command = new PutObjectCommand({ Bucket: S3_BUCKET!, Key: key, ContentType: contentType });
-  const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: 60 });
+  const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: 300 });
 
   return NextResponse.json({ uploadUrl, key, url: cdnUrl(key) });
 }
