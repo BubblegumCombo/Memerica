@@ -39,9 +39,11 @@ export default function FeedPage() {
     <div className="flex h-full flex-col">
       <SwipeCarousel>
         {feed.map((post) => (
-          <div key={post.id} className="px-[18px] pt-1">
-            <div className="overflow-hidden rounded-[18px] border border-line bg-card shadow-[0_14px_44px_rgba(0,0,0,0.45)]">
-              <MemeMedia post={post} height={360} />
+          <div key={post.id} className="flex h-full flex-col px-[18px] py-2">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-line bg-card shadow-[0_14px_44px_rgba(0,0,0,0.45)]">
+              <div className="relative min-h-0 flex-1">
+                <MemeMedia post={post} fill />
+              </div>
               <ReactionBar postId={post.id} />
             </div>
           </div>

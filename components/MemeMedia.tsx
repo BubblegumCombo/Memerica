@@ -1,32 +1,42 @@
 import type { Post } from "@/lib/types";
 
 /**
- * Renders a meme's visual:
+ * Renders a meme's visual, scaled to FIT (never cropped):
  *  - any post with an image (uploaded, or composed-on-an-image) shows the
- *    picture, with top/bottom Anton captions overlaid when the meme was composed
- *    (falling back to a single legacy caption line);
+ *    picture object-contained on a dark backdrop, with top/bottom Anton
+ *    captions overlaid when the meme was composed (falling back to a single
+ *    legacy caption line);
  *  - a composed meme with no image is drawn as a colored card with a faint
  *    watermark word and two caption lines (the original seed look).
+ *
+ * `fill` makes the media fill its parent (the feed card); otherwise it uses a
+ * fixed `height` (composer preview, etc.).
  */
 export function MemeMedia({
   post,
   height = 360,
+  fill = false,
   captionSize = 29,
   watermarkSize,
 }: {
   post: Post;
   height?: number;
+  fill?: boolean;
   captionSize?: number;
   watermarkSize?: number;
 }) {
   const c = post.compose;
+  const sizeStyle = fill ? undefined : { height };
 
   if (post.imageUrl) {
     const hasOverlay = Boolean(c && (c.top || c.bottom));
     return (
-      <div className="relative w-full overflow-hidden" style={{ height }}>
+      <div
+        className={`relative w-full overflow-hidden bg-black ${fill ? "h-full" : ""}`}
+        style={sizeStyle}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.imageUrl} alt={c?.top || post.caption || "meme"} className="h-full w-full object-cover" />
+        <img src={post.imageUrl} alt={c?.top || post.caption || "meme"} className="h-full w-full object-contain" />
         {hasOverlay ? (
           <>
             {c?.top ? (
@@ -60,8 +70,8 @@ export function MemeMedia({
 
   return (
     <div
-      className="relative flex flex-col justify-between"
-      style={{ height, background: c?.bg ?? "#1e1e1e", padding: "22px 16px" }}
+      className={`relative flex flex-col justify-between ${fill ? "h-full" : ""}`}
+      style={{ ...sizeStyle, background: c?.bg ?? "#1e1e1e", padding: "22px 16px" }}
     >
       {c?.watermark ? (
         <div
