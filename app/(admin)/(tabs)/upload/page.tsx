@@ -41,7 +41,9 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hashInfo, setHashInfo] = useState<{ file: File; hash: string } | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ file: File; tooLong: boolean } | null>(null);
+  const [videoCheck, setVideoCheck] = useState<
+    { file: File; ok: boolean; reason?: "toolong" | "error" } | null
+  >(null);
 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -54,13 +56,17 @@ export default function UploadPage() {
   // Only trust each derived value once it belongs to the file currently shown.
   const activeHash = hashInfo && hashInfo.file === activeFile ? hashInfo.hash : null;
   const dupWarning = activeHash !== null && posts.some((p) => p.imageHash === activeHash);
-  const videoTooLong = videoInfo && videoInfo.file === activeFile ? videoInfo.tooLong : false;
+  const isVideo = Boolean(activeFile && activeFile.type.startsWith("video/"));
+  const videoChecked = videoCheck && videoCheck.file === activeFile ? videoCheck : null;
+  // A video may only publish once we've confirmed its duration is <= 60s.
+  const videoOk = !isVideo || (videoChecked?.ok ?? false);
   const canPublish =
-    (mode === "compose" ? Boolean(composeFile) : Boolean(current)) && !videoTooLong;
+    (mode === "compose" ? Boolean(composeFile) : Boolean(current)) && videoOk;
 
-  // Hash the active file so we can flag a re-upload of the same image/video.
+  // Hash the active image so we can flag a re-upload (images only — hashing a
+  // whole video would pull tens of MB into memory and re-encodes never match).
   useEffect(() => {
-    if (!activeFile) return;
+    if (!activeFile || activeFile.type.startsWith("video/")) return;
     let cancelled = false;
     hashFile(activeFile).then((hash) => {
       if (!cancelled) setHashInfo({ file: activeFile, hash });
@@ -70,18 +76,29 @@ export default function UploadPage() {
     };
   }, [activeFile]);
 
-  // Reject videos longer than a minute (checked client-side via metadata).
+  // Confirm a video is <= 1 min before it can publish. Until metadata loads the
+  // video stays not-publishable; an unreadable file (onerror or a timeout, e.g.
+  // some .mov codecs) is blocked rather than silently allowed through.
   useEffect(() => {
     if (!activeFile || !activeFile.type.startsWith("video/")) return;
     const url = URL.createObjectURL(activeFile);
     const v = document.createElement("video");
     v.preload = "metadata";
-    v.onloadedmetadata = () => {
-      setVideoInfo({ file: activeFile, tooLong: v.duration > 60.5 });
+    let done = false;
+    const finish = (ok: boolean, reason?: "toolong" | "error") => {
+      if (done) return;
+      done = true;
       URL.revokeObjectURL(url);
+      setVideoCheck({ file: activeFile, ok, reason });
     };
+    const timer = setTimeout(() => finish(false, "error"), 15000);
+    v.onloadedmetadata = () => (v.duration > 60.5 ? finish(false, "toolong") : finish(true));
+    v.onerror = () => finish(false, "error");
     v.src = url;
-    return () => URL.revokeObjectURL(url);
+    return () => {
+      clearTimeout(timer);
+      if (!done) URL.revokeObjectURL(url);
+    };
   }, [activeFile]);
 
   const matchedMembers = members.filter((m) => m.tagKeys.some((t) => selected.includes(t)));
@@ -108,6 +125,7 @@ export default function UploadPage() {
   function pickBatch(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length) {
+      batch.forEach((b) => URL.revokeObjectURL(b.url));
       setBatch(files.map((file) => ({ file, url: URL.createObjectURL(file) })));
       setBatchIndex(0);
     }
@@ -132,6 +150,13 @@ export default function UploadPage() {
   async function publish() {
     const fileToUpload = mode === "compose" ? composeFile : current?.file;
     if (!fileToUpload || uploading) return;
+    // Don't upload a video we haven't confirmed is within the length limit.
+    if (
+      fileToUpload.type.startsWith("video/") &&
+      !(videoCheck?.file === fileToUpload && videoCheck.ok)
+    ) {
+      return;
+    }
     setError(null);
     setUploading(true);
     let res;
@@ -169,6 +194,8 @@ export default function UploadPage() {
       setBatchIndex(batchIndex + 1);
       return;
     }
+    batch.forEach((b) => URL.revokeObjectURL(b.url));
+    if (composeUrl) URL.revokeObjectURL(composeUrl);
     router.push("/feed");
   }
 
@@ -379,9 +406,16 @@ export default function UploadPage() {
           </div>
         ) : null}
 
-        {videoTooLong ? (
+        {isVideo && !videoChecked ? (
+          <div className="mt-[18px] rounded-[10px] border border-line bg-card px-3 py-2 text-xs font-semibold text-muted">
+            Checking video…
+          </div>
+        ) : null}
+        {videoChecked && !videoChecked.ok ? (
           <div className="mt-[18px] rounded-[10px] border border-dislike/40 bg-dislike/10 px-3 py-2 text-xs font-semibold text-dislike">
-            Videos must be 1 minute or less — pick a shorter clip.
+            {videoChecked.reason === "toolong"
+              ? "Videos must be 1 minute or less — pick a shorter clip."
+              : "Couldn’t read this video. Try a different file (MP4 works best)."}
           </div>
         ) : null}
 
