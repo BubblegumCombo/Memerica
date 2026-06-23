@@ -1,4 +1,8 @@
 import type { Post } from "@/lib/types";
+import { MemeVideo } from "./MemeVideo";
+
+/** Treat S3 keys/URLs ending in a video extension as videos. */
+const isVideoUrl = (src: string) => /\.(mp4|webm|mov)(\?|$)/i.test(src);
 
 /**
  * Renders a meme's visual, scaled to FIT (never cropped):
@@ -35,8 +39,12 @@ export function MemeMedia({
         className={`relative w-full overflow-hidden bg-black ${fill ? "h-full" : ""}`}
         style={sizeStyle}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.imageUrl} alt={c?.top || post.caption || "meme"} className="h-full w-full object-contain" />
+        {isVideoUrl(post.imageUrl) ? (
+          <MemeVideo src={post.imageUrl} className="h-full w-full object-contain" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={post.imageUrl} alt={c?.top || post.caption || "meme"} className="h-full w-full object-contain" />
+        )}
         {hasOverlay ? (
           <>
             {c?.top ? (

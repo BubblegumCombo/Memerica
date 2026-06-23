@@ -1,6 +1,6 @@
 "use client";
 
-import { Children, useEffect, useRef, useState, type ReactNode } from "react";
+import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * Horizontal snap carousel with drag-to-scroll, snap-on-release, click
@@ -147,7 +147,7 @@ export function SwipeCarousel({
       >
         {slides.map((slide, i) => (
           <div
-            key={i}
+            key={isValidElement(slide) && slide.key != null ? slide.key : i}
             className="flex w-full flex-none flex-col justify-center"
             style={{ scrollSnapAlign: "center" }}
           >
