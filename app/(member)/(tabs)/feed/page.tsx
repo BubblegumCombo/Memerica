@@ -6,8 +6,16 @@ import { SwipeCarousel } from "@/components/SwipeCarousel";
 import { MemeMedia } from "@/components/MemeMedia";
 import { ReactionBar } from "@/components/ReactionBar";
 
+// Remembers the last-viewed post across navigation (e.g. opening comments) so
+// the feed resumes there instead of jumping back to the newest meme.
+let lastViewedPostId: string | null = null;
+
 export default function FeedPage() {
   const { feed, you } = useStore();
+
+  const initialPage = lastViewedPostId
+    ? Math.max(0, feed.findIndex((p) => p.id === lastViewedPostId))
+    : 0;
 
   if (feed.length === 0) {
     const noTags = you.role === "member" && you.tagKeys.length === 0;
@@ -37,7 +45,12 @@ export default function FeedPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <SwipeCarousel>
+      <SwipeCarousel
+        initialPage={initialPage}
+        onPageChange={(i) => {
+          lastViewedPostId = feed[i]?.id ?? lastViewedPostId;
+        }}
+      >
         {feed.map((post) => (
           <div key={post.id} className="flex h-full flex-col px-[18px] py-2">
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-line bg-card shadow-[0_14px_44px_rgba(0,0,0,0.45)]">

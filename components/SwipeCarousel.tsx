@@ -41,11 +41,21 @@ function FlagArrow({ dir }: { dir: "left" | "right" }) {
   );
 }
 
-export function SwipeCarousel({ children }: { children: ReactNode }) {
+export function SwipeCarousel({
+  children,
+  initialPage = 0,
+  onPageChange,
+}: {
+  children: ReactNode;
+  /** Page to restore on mount (resume where the user left off). */
+  initialPage?: number;
+  /** Called with the current page index as the user navigates. */
+  onPageChange?: (page: number) => void;
+}) {
   const slides = Children.toArray(children);
   const count = slides.length;
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(initialPage);
 
   function tweenTo(p: number) {
     const c = scrollerRef.current;
@@ -110,11 +120,21 @@ export function SwipeCarousel({ children }: { children: ReactNode }) {
     };
   }, [count]);
 
+  // Restore the saved scroll position once on mount.
+  useEffect(() => {
+    const c = scrollerRef.current;
+    if (c && initialPage > 0) c.scrollLeft = initialPage * c.clientWidth;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function onScroll() {
     const c = scrollerRef.current;
     if (!c) return;
     const p = Math.round(c.scrollLeft / Math.max(1, c.clientWidth));
-    if (p !== page) setPage(p);
+    if (p !== page) {
+      setPage(p);
+      onPageChange?.(p);
+    }
   }
 
   return (
