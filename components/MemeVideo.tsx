@@ -35,7 +35,9 @@ export function MemeVideo({ src, className }: { src: string; className?: string 
     el.muted = muted;
     if (active) el.play().catch(() => {});
     else el.pause();
-  }, [active, muted]);
+    // `src` is a dep so a source swap (e.g. carousel reusing this element for a
+    // newly prepended post) re-issues play() for the active slide.
+  }, [active, muted, src]);
 
   return (
     <div className="relative h-full w-full">

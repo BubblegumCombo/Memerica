@@ -92,7 +92,14 @@ export default function UploadPage() {
       setVideoCheck({ file: activeFile, ok, reason });
     };
     const timer = setTimeout(() => finish(false, "error"), 15000);
-    v.onloadedmetadata = () => (v.duration > 60.5 ? finish(false, "toolong") : finish(true));
+    v.onloadedmetadata = () => {
+      const d = v.duration;
+      // Some containers report Infinity/NaN before resolving — treat unknown as
+      // readable rather than false-rejecting a valid short clip.
+      if (!Number.isFinite(d)) finish(true);
+      else if (d > 60.5) finish(false, "toolong");
+      else finish(true);
+    };
     v.onerror = () => finish(false, "error");
     v.src = url;
     return () => {
