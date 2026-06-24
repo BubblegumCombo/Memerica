@@ -71,7 +71,10 @@ export function SwipeCarousel({
   const place = useCallback((px: number, animate: boolean) => {
     const t = trackRef.current;
     if (!t) return;
-    t.style.transition = animate ? EASE : "none";
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    t.style.transition = animate && !reduced ? EASE : "none";
     t.style.transform = `translate3d(${px}px, 0, 0)`;
   }, []);
 
@@ -102,6 +105,9 @@ export function SwipeCarousel({
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Clear any stale suppression — a prior swipe/cancel may not have produced a
+    // click to consume it, and we must not eat this gesture's tap.
+    suppressClick.current = false;
     const w = viewportRef.current?.clientWidth ?? 0;
     drag.current = { startX: e.clientX, w, moved: false };
   }
