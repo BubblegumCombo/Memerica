@@ -1,11 +1,21 @@
 "use client";
 
-import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  Children,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 
 /**
- * Horizontal snap carousel with drag-to-scroll, snap-on-release, click
- * suppression after a drag, and flag-striped prev/next arrows. Ports the
- * pointer logic from the design (Memerica.dc.html:841-869).
+ * Horizontal carousel that animates between posts: the track translates with a
+ * CSS transition (the old post slides off, the new one slides in). Supports
+ * touch and mouse swipe — a drag follows the finger/cursor and snaps to the
+ * nearest post on release. Flag-striped prev/next arrows animate the same way.
  */
 
 /** Left/right nav arrow filled with red/white/blue US-flag stripes. */
@@ -30,16 +40,12 @@ function FlagArrow({ dir }: { dir: "left" | "right" }) {
         <rect x="0" y="8" width="24" height="8" fill="#f5f5f5" />
         <rect x="0" y="16" width="24" height="8" fill="#3c3b6e" />
       </g>
-      <path
-        d={arrow}
-        fill="none"
-        stroke="rgba(0,0,0,0.4)"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
+      <path d={arrow} fill="none" stroke="rgba(0,0,0,0.4)" strokeWidth="1.2" strokeLinejoin="round" />
     </svg>
   );
 }
+
+const EASE = "transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1)";
 
 export function SwipeCarousel({
   children,
@@ -54,112 +60,111 @@ export function SwipeCarousel({
 }) {
   const slides = Children.toArray(children);
   const count = slides.length;
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(initialPage);
 
-  function tweenTo(p: number) {
-    const c = scrollerRef.current;
-    if (!c) return;
-    const snap = c.style.scrollSnapType;
-    c.style.scrollSnapType = "none";
-    c.scrollLeft = p * c.clientWidth;
-    void c.offsetWidth;
-    c.style.scrollSnapType = snap;
-  }
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ startX: number; w: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const first = useRef(true);
 
-  useEffect(() => {
-    const c = scrollerRef.current;
-    if (!c) return;
-
-    let drag: { x: number; sl: number; moved: boolean } | null = null;
-    let suppressClick = false;
-
-    const onDown = (e: PointerEvent) => {
-      drag = { x: e.clientX, sl: c.scrollLeft, moved: false };
-    };
-    const onMove = (e: PointerEvent) => {
-      if (!drag) return;
-      const dx = e.clientX - drag.x;
-      if (Math.abs(dx) > 4) drag.moved = true;
-      if (drag.moved) {
-        c.scrollLeft = drag.sl - dx;
-        if (e.cancelable) e.preventDefault();
-      }
-    };
-    const onUp = () => {
-      if (!drag) return;
-      const moved = drag.moved;
-      drag = null;
-      if (moved) {
-        suppressClick = true;
-        const p = Math.max(0, Math.min(count - 1, Math.round(c.scrollLeft / Math.max(1, c.clientWidth))));
-        const snap = c.style.scrollSnapType;
-        c.style.scrollSnapType = "none";
-        c.scrollLeft = p * c.clientWidth;
-        void c.offsetWidth;
-        c.style.scrollSnapType = snap;
-      }
-    };
-    const onClickCapture = (e: MouseEvent) => {
-      if (suppressClick) {
-        suppressClick = false;
-        e.stopPropagation();
-        e.preventDefault();
-      }
-    };
-
-    c.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointermove", onMove, { passive: false });
-    window.addEventListener("pointerup", onUp);
-    c.addEventListener("click", onClickCapture, true);
-    return () => {
-      c.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      c.removeEventListener("click", onClickCapture, true);
-    };
-  }, [count]);
-
-  // Restore the saved scroll position once on mount.
-  useEffect(() => {
-    const c = scrollerRef.current;
-    if (c && initialPage > 0) c.scrollLeft = initialPage * c.clientWidth;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const place = useCallback((px: number, animate: boolean) => {
+    const t = trackRef.current;
+    if (!t) return;
+    t.style.transition = animate ? EASE : "none";
+    t.style.transform = `translate3d(${px}px, 0, 0)`;
   }, []);
 
-  function onScroll() {
-    const c = scrollerRef.current;
-    if (!c) return;
-    const p = Math.round(c.scrollLeft / Math.max(1, c.clientWidth));
-    if (p !== page) {
-      setPage(p);
-      onPageChange?.(p);
+  // Rest at the current page — jump on first paint (incl. resumed position),
+  // animate on every change after that.
+  useEffect(() => {
+    const w = viewportRef.current?.clientWidth ?? 0;
+    place(-page * w, !first.current);
+    first.current = false;
+  }, [page, place]);
+
+  // Keep the offset correct across viewport resizes (no animation).
+  useEffect(() => {
+    const onResize = () => {
+      const w = viewportRef.current?.clientWidth ?? 0;
+      place(-page * w, false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [page, place]);
+
+  function go(next: number) {
+    const clamped = Math.max(0, Math.min(count - 1, next));
+    if (clamped === page) return;
+    setPage(clamped);
+    onPageChange?.(clamped);
+  }
+
+  function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const w = viewportRef.current?.clientWidth ?? 0;
+    drag.current = { startX: e.clientX, w, moved: false };
+  }
+  function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.startX;
+    if (!d.moved && Math.abs(dx) > 4) {
+      d.moved = true;
+      // Only capture once it's clearly a drag, so taps still reach buttons/links.
+      viewportRef.current?.setPointerCapture(e.pointerId);
     }
+    if (!d.moved) return;
+    let off = dx;
+    if ((page === 0 && off > 0) || (page === count - 1 && off < 0)) off *= 0.35; // edge resistance
+    place(-page * d.w + off, false);
+  }
+  function onPointerUp(e: ReactPointerEvent<HTMLDivElement>) {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    if (!d.moved) return;
+    suppressClick.current = true;
+    const dx = e.clientX - d.startX;
+    const threshold = Math.min(80, d.w * 0.2);
+    if (dx <= -threshold && page < count - 1) go(page + 1);
+    else if (dx >= threshold && page > 0) go(page - 1);
+    else place(-page * d.w, true); // not far enough — snap back
   }
 
   return (
     <div className="flex h-full flex-col">
       <div
-        ref={scrollerRef}
-        onScroll={onScroll}
-        className="no-scrollbar flex flex-1 cursor-grab touch-pan-y select-none overflow-x-auto"
-        style={{ scrollSnapType: "x mandatory" }}
+        ref={viewportRef}
+        className="relative flex-1 cursor-grab touch-pan-y select-none overflow-hidden active:cursor-grabbing"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onClickCapture={(e) => {
+          if (suppressClick.current) {
+            suppressClick.current = false;
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        }}
       >
-        {slides.map((slide, i) => (
-          <div
-            key={isValidElement(slide) && slide.key != null ? slide.key : i}
-            className="flex w-full flex-none flex-col justify-center"
-            style={{ scrollSnapAlign: "center" }}
-          >
-            {slide}
-          </div>
-        ))}
+        <div ref={trackRef} className="flex h-full" style={{ willChange: "transform" }}>
+          {slides.map((slide, i) => (
+            <div
+              key={isValidElement(slide) && slide.key != null ? slide.key : i}
+              className="h-full w-full flex-none"
+            >
+              {slide}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex items-center justify-center gap-10 py-4">
         <button
           type="button"
-          onClick={() => tweenTo(Math.max(0, page - 1))}
+          onClick={() => go(page - 1)}
           className="transition-opacity disabled:opacity-25"
           disabled={page === 0}
           aria-label="Previous meme"
@@ -168,7 +173,7 @@ export function SwipeCarousel({
         </button>
         <button
           type="button"
-          onClick={() => tweenTo(Math.min(count - 1, page + 1))}
+          onClick={() => go(page + 1)}
           className="transition-opacity disabled:opacity-25"
           disabled={page === count - 1}
           aria-label="Next meme"
