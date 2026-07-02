@@ -5,6 +5,7 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { RoleToggle } from "@/components/RoleToggle";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { StoreProvider } from "@/lib/data/store";
+import { UploadQueueProvider } from "@/lib/upload-queue/context";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
@@ -73,8 +74,10 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-app text-ink">
         <StoreProvider>
-          {children}
-          <RoleToggle />
+          <UploadQueueProvider>
+            {children}
+            <RoleToggle />
+          </UploadQueueProvider>
         </StoreProvider>
         <InstallPrompt />
         <ServiceWorkerRegister />

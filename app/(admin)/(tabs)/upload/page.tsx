@@ -9,9 +9,11 @@ import { MemeComposer } from "@/components/MemeComposer";
 import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/icons";
 import { uploadImage } from "@/lib/upload";
+import { useUploadQueue } from "@/lib/upload-queue/context";
 
 const DEFAULT_COMPOSE: MemeCompose = { bg: "#111111", watermark: "", top: "", bottom: "" };
 const GREEN = "#22c55e";
+const ACCEPT = "image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime";
 
 /** SHA-256 hex of a file's bytes — used to detect a re-upload of the same image. */
 async function hashFile(file: File): Promise<string> {
@@ -33,9 +35,13 @@ export default function UploadPage() {
   const [composeFile, setComposeFile] = useState<File | null>(null);
   const [composeUrl, setComposeUrl] = useState<string | undefined>(undefined);
 
-  // Upload mode: a queue of images, published one at a time with their own tags.
-  const [batch, setBatch] = useState<{ file: File; url: string }[]>([]);
-  const [batchIndex, setBatchIndex] = useState(0);
+  // Upload mode: the persistent posting queue — survives tab switches and
+  // reloads, published one item at a time with its own tags.
+  const { ready, items, activeIndex, setActiveIndex, addFiles, removeItem, clearQueue } =
+    useUploadQueue();
+  // Items can vanish underneath the saved position (posted from a prior visit,
+  // removed, …) so the index is clamped on read rather than trusted.
+  const index = items.length ? Math.min(activeIndex, items.length - 1) : 0;
 
   const [selected, setSelected] = useState<string[]>(["based", "gaming"]);
   const [uploading, setUploading] = useState(false);
@@ -49,8 +55,8 @@ export default function UploadPage() {
   const [newName, setNewName] = useState("");
   const [newMembers, setNewMembers] = useState<string[]>([]);
 
-  const current = batch[batchIndex];
-  const remaining = mode === "upload" ? Math.max(0, batch.length - batchIndex - 1) : 0;
+  const current = items[index];
+  const remaining = mode === "upload" ? Math.max(0, items.length - index - 1) : 0;
 
   const activeFile = mode === "compose" ? composeFile : current?.file;
   // Only trust each derived value once it belongs to the file currently shown.
@@ -131,16 +137,16 @@ export default function UploadPage() {
   }
   function pickBatch(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    if (files.length) {
-      batch.forEach((b) => URL.revokeObjectURL(b.url));
-      setBatch(files.map((file) => ({ file, url: URL.createObjectURL(file) })));
-      setBatchIndex(0);
-    }
+    addFiles(files);
+    // Allow re-picking the same file(s) later — a used input won't re-fire
+    // onChange for an identical selection otherwise.
+    e.target.value = "";
   }
-  function clearBatch() {
-    batch.forEach((b) => URL.revokeObjectURL(b.url));
-    setBatch([]);
-    setBatchIndex(0);
+  function removeCurrent() {
+    if (current) removeItem(current.id);
+  }
+  function clearAll() {
+    if (window.confirm(`Remove all ${items.length} queued files?`)) clearQueue();
   }
   function toggleNewMember(id: string) {
     setNewMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
@@ -195,13 +201,13 @@ export default function UploadPage() {
           },
     );
 
-    // Upload queue: advance to the next image (keeping the chosen tags) instead
-    // of leaving — only the last one in the batch sends you back to the feed.
-    if (mode === "upload" && batchIndex + 1 < batch.length) {
-      setBatchIndex(batchIndex + 1);
-      return;
+    // Posting queue: the published item leaves the queue and the next one
+    // slides into its place (keeping the chosen tags) — only emptying the
+    // queue sends you back to the feed.
+    if (mode === "upload" && current) {
+      removeItem(current.id);
+      if (items.length > 1) return;
     }
-    batch.forEach((b) => URL.revokeObjectURL(b.url));
     if (composeUrl) URL.revokeObjectURL(composeUrl);
     router.push("/feed");
   }
@@ -231,10 +237,13 @@ export default function UploadPage() {
               onTopChange={(v) => setCompose({ ...compose, top: v })}
               onBottomChange={(v) => setCompose({ ...compose, bottom: v })}
             />
+          ) : !ready ? (
+            <div className="h-[200px] rounded-[14px] border border-line bg-input" />
           ) : current ? (
             <div className="relative overflow-hidden rounded-[14px] border border-line bg-black">
               {current.file.type.startsWith("video/") ? (
                 <video
+                  key={current.id}
                   src={current.url}
                   className="max-h-[320px] w-full object-contain"
                   autoPlay
@@ -244,18 +253,23 @@ export default function UploadPage() {
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={current.url} alt="upload preview" className="max-h-[320px] w-full object-contain" />
+                <img
+                  key={current.id}
+                  src={current.url}
+                  alt="upload preview"
+                  className="max-h-[320px] w-full object-contain"
+                />
               )}
               <button
                 type="button"
-                onClick={clearBatch}
+                onClick={removeCurrent}
                 className="absolute top-2.5 right-2.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
               >
-                Clear
+                Remove
               </button>
-              {batch.length > 1 ? (
+              {items.length > 1 ? (
                 <div className="absolute bottom-2.5 left-2.5 rounded-full bg-black/50 px-2.5 py-[5px] font-mono text-[11px] text-ink-2 backdrop-blur">
-                  {batchIndex + 1} of {batch.length}
+                  {index + 1} of {items.length}
                 </div>
               ) : null}
             </div>
@@ -263,16 +277,63 @@ export default function UploadPage() {
             <label className="flex h-[200px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-line-strong bg-input text-center">
               <PlusIcon size={22} strokeWidth={2} />
               <span className="text-sm font-semibold text-ink-2">Choose images or a video</span>
-              <span className="text-xs text-muted-2">Videos up to 1 min · publish each with its own tags</span>
-              <input
-                type="file"
-                multiple
-                accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime"
-                onChange={pickBatch}
-                className="hidden"
-              />
+              <span className="text-xs text-muted-2">
+                Dump in as many as you like — they queue up here until posted
+              </span>
+              <input type="file" multiple accept={ACCEPT} onChange={pickBatch} className="hidden" />
             </label>
           )}
+
+          {/* the queue: jump between waiting files, add more, or clear out */}
+          {mode === "upload" && ready && items.length > 0 ? (
+            <div className="mt-2.5">
+              <div className="no-scrollbar flex items-center gap-2 overflow-x-auto">
+                {items.map((it, i) => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => setActiveIndex(i)}
+                    aria-current={i === index ? "true" : undefined}
+                    className="h-14 w-14 shrink-0 overflow-hidden rounded-[10px] border-2 bg-black"
+                    style={{
+                      borderColor: i === index ? "#3b82f6" : "#2a2a2a",
+                      opacity: i === index ? 1 : 0.65,
+                    }}
+                  >
+                    {it.file.type.startsWith("video/") ? (
+                      <video
+                        src={it.url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={it.url} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </button>
+                ))}
+                <label className="flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-2 border-dashed border-line-strong text-muted-2">
+                  <PlusIcon size={18} strokeWidth={2.2} />
+                  <input type="file" multiple accept={ACCEPT} onChange={pickBatch} className="hidden" />
+                </label>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-xs text-muted-2">
+                  {items.length === 1 ? "1 file" : `${items.length} files`} in the queue — kept
+                  even if you leave
+                </span>
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="text-xs font-semibold text-muted-2 underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* tags */}
