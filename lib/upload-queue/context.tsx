@@ -73,6 +73,9 @@ export function UploadQueueProvider({ children }: { children: ReactNode }) {
 
   const addFiles = useCallback((files: File[]) => {
     if (!files.length) return;
+    // A batch dumped into an empty queue starts at its first file — don't let
+    // the position left over from a drained queue clamp us into the middle.
+    if (itemsRef.current.length === 0) setActiveIndex(0);
     const now = Date.now();
     const added: QueueItem[] = files.map((file, i) => ({
       id: crypto.randomUUID(),
