@@ -1,7 +1,7 @@
 # process-image Lambda
 
-S3-triggered function that, for each new original under `uploads/`, writes a
-1080px WebP and a 320px thumbnail under `uploads/derived/` and runs Rekognition
+S3-triggered function that, for each new original under `Memes/`, writes a
+1080px WebP and a 320px thumbnail under `Memes/derived/` and runs Rekognition
 moderation.
 
 ## Deploy
@@ -12,7 +12,7 @@ npm install                       # sharp must match the Lambda arch — build o
                                   # linux/arm64 or use a Lambda layer for sharp
 zip -r function.zip index.mjs node_modules package.json
 # create/update the function (Node 20+, arm64), then add the S3 trigger:
-#   bucket: memerica-uploads, event: s3:ObjectCreated:*, prefix: uploads/
+#   bucket: memerica-uploads, event: s3:ObjectCreated:*, prefix: Memes/
 ```
 
 Runtime: Node.js 20+, handler `index.handler`, 1024 MB / 30s timeout is plenty.
@@ -23,7 +23,7 @@ Runtime: Node.js 20+, handler `index.handler`, 1024 MB / 30s timeout is plenty.
 {
   "Version": "2012-10-17",
   "Statement": [
-    { "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"], "Resource": "arn:aws:s3:::memerica-uploads/uploads/*" },
+    { "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"], "Resource": "arn:aws:s3:::memerica-uploads/Memes/*" },
     { "Effect": "Allow", "Action": ["rekognition:DetectModerationLabels"], "Resource": "*" },
     { "Effect": "Allow", "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], "Resource": "arn:aws:logs:*:*:*" }
   ]

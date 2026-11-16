@@ -3,7 +3,7 @@ import { RekognitionClient, DetectModerationLabelsCommand } from "@aws-sdk/clien
 import sharp from "sharp";
 
 // S3 ObjectCreated trigger for Memerica uploads. For each new original under
-// uploads/, it writes a 1080 WebP + a 320 thumbnail under uploads/derived/ and
+// Memes/, it writes a 1080 WebP + a 320 thumbnail under Memes/derived/ and
 // runs Rekognition moderation. Wire status back to the post row via the
 // Supabase service-role key (see the TODO below).
 
@@ -17,10 +17,10 @@ export const handler = async (event) => {
     const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
 
     // Only process freshly-uploaded originals.
-    if (!key.startsWith("uploads/") || key.includes("/derived/")) continue;
+    if (!key.startsWith("Memes/") || key.includes("/derived/")) continue;
 
     const original = await getObjectBytes(bucket, key);
-    const base = key.replace(/^uploads\//, "uploads/derived/").replace(/\.[^.]+$/, "");
+    const base = key.replace(/^Memes\//, "Memes/derived/").replace(/\.[^.]+$/, "");
 
     const webp = await sharp(original)
       .resize(1080, 1080, { fit: "inside", withoutEnlargement: true })

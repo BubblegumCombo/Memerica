@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsupported content type" }, { status: 415 });
   }
 
-  const key = `uploads/${crypto.randomUUID()}.${EXT[contentType]}`;
+  const key = `Memes/${crypto.randomUUID()}.${EXT[contentType]}`;
   const command = new PutObjectCommand({ Bucket: S3_BUCKET!, Key: key, ContentType: contentType });
   const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: 300 });
 
