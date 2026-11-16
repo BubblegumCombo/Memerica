@@ -52,7 +52,7 @@ Uploaded and composed memes are stored in your **own** S3 bucket and served via 
 Setup (new, dedicated AWS account):
 
 1. Create a **private** S3 bucket (e.g. `memerica-uploads`) with a CloudFront distribution in front of it using Origin Access Control (OAC). Put the distribution domain in `NEXT_PUBLIC_CDN_URL`.
-2. Create a least-privilege IAM user for the presign route with `s3:PutObject` on `arn:aws:s3:::memerica-uploads/uploads/*`; put its keys + `AWS_REGION` + `S3_BUCKET` in `.env.local`.
+2. Create a least-privilege IAM user for the presign route with `s3:PutObject` on `arn:aws:s3:::memerica-uploads/Memes/*`; put its keys + `AWS_REGION` + `S3_BUCKET` in `.env.local`.
 3. Deploy the image-processing Lambda in `infra/lambda/process-image/` and wire it to the bucket's `s3:ObjectCreated:*` event (see that folder's README) — it writes WebP derivatives and runs Rekognition moderation.
 
 Helpers in place: `lib/aws/*`, the presign route, and `lib/upload.ts` (client direct-to-S3). The Upload screen calls these and persists the returned key on the post; composed memes upload the raw image and overlay the top/bottom captions at render time (`components/MemeMedia.tsx`) instead of flattening to a PNG.
